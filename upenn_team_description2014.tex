@@ -47,75 +47,179 @@
 \section{Introduction}
 	In 1999, two years after the first international Robocup meet, the University of Pennsylvania formed the UPennalizers autonomous robot soccer group and began stepping up to the challenges put forth by the competition. While the league was still utilizing four-legged Sony Aibos, the UPennalizers made the quarterfinal rounds every year through 2006 before taking a brief two-year hiatus in 2007. The team reformed and returned in 2009 to begin competing in the Standard Platform League with Aldebaran Naos, taking on bipedal motion alongside improved vision techniques and advanced team behaviors. 
 
-	Continuing its streak of making the international quarterfinals through 2012, the UPennalizers were challenged in 2013 with training a team of entirely new undergraduates without its seasoned veterans from previous years. In 2014, with existing veterans and more talents joining, the team modified its locomotion engine and rebuilt the cognition module. It went on to take first place at the 2014 US Open, and made it to the knock-out phase of RoboCup2014 in Brazil, ranking 9 of 20.
+	Continuing its streak of making the international quarterfinals through 2012, the UPennalizers were challenged in 2013 with training a team of entirely new undergraduates without its seasoned veterans from previous years. In 2014, with existing veterans and more talents joining, the team modified the locomotion engine and rebuilt the cognition module. It went on to take first place at the 2014 US Open, and made it to the knock-out phase of Robocup 2014 in Brazil, ranking 9 of 20.
 
 
 
-\section{Software Architecture - Dickens}
+\section{Software Architecture}
 	A high-level description of the software architecture for the Naos is shown in Figure \ref{fig:softarch}. The current architecture is an expansion upon the previous years work. It uses Lua as a common development platform to interface between all modules.
 
+	The system maintains a constant update speed of 100Hz, and is decoupled into two separate pipelines. The main process handles motion control and behavior control, while an auxiliary process is dedicated solely to cognition processing. This decision allows for more efficient handling of the Nao's on-board single-core Intel Atom Z530 clocked at 1.6 GHz. The cognition engine runs off of the remaining processing power not used by the main modules, and as a result, the Naos were noted to be much more stable and robust than in previous years.
+
 	Low-level interactions with hardware are implemented using compiled C libraries in conjunction with the Nao's on-board hardware controller (NaoQi) or custom controllers. These in turn, are called via Lua scripts, and allow for control over motor positions, motor stiffnesses, and LED's. Sensory feedback is also handled similarly, allowing users to get data from a variety of sources such as the Nao's two on-board cameras, foot weight sensors, the inertial measurement unit (IMU), and the ultrasound microphones.
+
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=.9\textwidth]{figures/SoftArchOverview.eps}
+		\includegraphics[width=1.0\textwidth]{figures/SoftArchOverview.eps}
 		\caption{Block Diagram of the Software Architecture.}
-		\label{fig:softarch}
+		\label{}{fig:softarch}
 	\end{figure}
-
-	The system maintains a constant update speed of 100Hz, and is decoupled into two separate pipelines. The main process handles motion control and behavior control, while an auxiliary process is dedicated solely to cognition processing. This decision, made last season, allows for more efficient handling of the Nao's on-board single-core Intel Atom Z530 clocked at 1.6 GHz. The cognition engine runs off of the remaining processing power not used by the main modules, and as a result, the Naos were noted to be much more stable and robust than in previous years.
 
 	Inter-process communication is accomplished via shared memory. Important information such as ball distance, position on the field, and game state are examples of shared memory variables. Any module can write and read to shared memory. In addition, any operator connected to a Nao via secure shell can monitor the data stored in the shared memory module without any change or impact on the running system, allowing for real-time on-the-fly debugging and analysis through either Lua or MATLAB.
 
-	A variety of software is used to run our Naos. We utilize Lua 5.1.15 and LuaJIT 2.0.1 for high level interactions, MATLAB R2013a for debugging vision and localization information, C/C++ to run low-level processes, and Webots 7.1.2 for simulation purposes.
-
-
-  \subsection{Software Modules}
-  	The main modules accessed by our Lua routines are as follows, layered hierarchically:
-	  \begin{description}
-		  \item[Camera] Direct interface to the cameras located in the forehead (upper) and mouth (lower); controls switching frequency and bundling of images in YUYV format.
+	The main modules accessed by our Lua routines are as follows, layered hierarchically:
+	\begin{description}
+		\item[Camera] Direct interface to the cameras located in the forehead (upper) and mouth (lower); controls switching frequency and bundling of images in YUYV format.
   		\item[Vision] Interprets incoming images; based on the user-created color table and camera parameters, the module passes on information relating to the presence and relatively location of key objects such as the ball, defending goal posts, attacking goal posts, field lines, field corners, and other robots.
 	  	\item[World] Models the robot's state on the field, including pose and filtered ball position; 
-		  \item[Body] Handles physical sensory information and functions; reads joint encoders, IMU data, foot weight sensors, battery voltage, and chest button presses, but can also set motor positions, stiffnesses, and LED's.
+		\item[Body] Handles physical sensory information and functions; reads joint encoders, IMU data, foot weight sensors, battery voltage, and chest button presses, but can also set motor positions, stiffnesses, and LED's.
   		\item[Motion] Dictates general movements on the Nao; i.e. sitting, standing, diving	
 	  	\item[Walk] Controls omni-directional locomotion; takes in hand-tuned parameters and applies them to a zero-moment point (ZMP) based walk engine.
-		  \item[Kick] Maintains intra-robot stability during kick movements; different kick settings can be loaded to allow for powerful standing kicks, quick walk-kicks, and decisive side-kicks.
+		\item[Kick] Maintains intra-robot stability during kick movements; different kick settings can be loaded to allow for powerful standing kicks, quick walk-kicks, and decisive side-kicks.
   		\item[Keyframes] Lists scripted positions for certain movements; getting up from front and back falls is done by feeding the Body module a series of motor positions and timings.
 	  	\item[Game State Machine] Receives and relays information from the Game Controller; information from the GSM such as game state determines behavior among all robots on the field during certain times of the game.
-		  \item[Head State Machine] Controls head movements; different conditions determine when to switch into ball searching, ball tracking, and simply looking around.
+		\item[Head State Machine] Controls head movements; different conditions determine when to switch into ball searching, ball tracking, and simply looking around.
   		\item[Body State Machine] Dispatches movement instructions; conditions from all previous modules will cause the Nao to switch between chasing after far away balls, performing curved approaches to line up for shots, dribbling, and performing kicks when the ball is close enough.
 	  \end{description}
 
 
 
-\section{Vision-Dickens(Parallel Vision), Chris \& Junda (update in detection)}
- 	Our algorithms used for processing visual information are similar to those used by other Robocup teams in the past. Since fast vision is crucial to the robots’ behaviors, these algorithms are implemented using a small number of compiled Mex routines.
+\section{Cognition}
+	The cognition module acquires visual information from cameras and returns locations of key objects on the field, as well as the position of the robot itself. Figure \ref{fig:cog} shows the framework of the cognition module. 
 
-  During calibration, a Gaussian mixture model is used to partition the YCbCr color cube into the following colors:
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1.0\textwidth]{figures/CogStructure.png}
+		\caption{Block Diagram of the Cognition Module.}
+  		\label{fig:cog}
+	\end{figure}
+
+	Each Aldebaran Nao robot has two cameras on board, also know as the top (forehead) and bottom (mouth) camera. They feed images in stream at 30 frames per second each. Images from the top and bottom cameras are processed simultaneously by two processes. Different object detection routines are run on images from different cameras to improve efficiency. An arbitrator process coordinates intermediate results from the two processes and runs the localization module. The final results from the cognition module are sent to behavior controls.
+
+\subsection{Image Processing}
+	Algorithms used for processing visual information are the same for both camera processes, and they are similar to those used by other Robocup teams. 
+
+	The first step is color segmentation. A Gaussian mixture model is used to partition the YCbCr color cube into seven colors:
+
 	\begin{itemize}
-		\item[--] Orange (Ball)
-		\item[--] Yellow (Goals)
-		\item[--] Green (Field)
-		\item[--] White (Lines)
+		\item Orange (Ball)
+		\item Yellow (Goals)
+		\item Green (Field)
+		\item White (Lines)
+		\item Pink (Robot Jerseys)
+		\item Blue (Robot Jerseys)
+		\item Black (Others)
 	\end{itemize}
 
-  Using a number of trained images, resulting in a color look-up table. While the robot is running, the main processing pipeline segments the highest-resolution color images from the camera by classifying individual pixels based upon their YCbCr values. Connected regions are recognized as either connected components or edge regions, and objects are recognized from the statistics - such as the bounding box of the region, the centroid location, and the chord lengths in the region - of the colored regions. In this manner, the location of the ball and goal posts are detected.
+	The actual calibration process follows a supervised learning routine: images taken from both cameras are trained to form a color look-up table. While the robot is running, the image processing pipelines segment raw images into discretely colored images by classifying individual pixels based upon their mapped values in the color table. The segmented images are further shrunk to lower-resolution colored labels by merging adjacent pixels. Figure \ref{fig:unprocessed} to \ref{fig:labelb} show each step of color segmentation.
 
-  Field line recognition decreases the need for robots to actively search for landmarks, enabling them to chase the ball more effectively. The first step in line identification is to find white pixels that neighbor pixels of field green color. Once these pixels are located, a Hough transform is used to search for relevant line directions.
+	\begin{figure}[H]
+		\centering
+		\subfigure[Raw Image]{
+			\includegraphics[width=.6\textwidth]{figures/Unprocessed.eps}
+    			\label{fig:unprocessed}
+		}
+    		\quad
+		\subfigure[Segmented Image]{
+  	  		\includegraphics[width=.4\textwidth]{figures/Processed.eps}
+			\label{fig:processed}
+		}
+    		\quad
+ 		\subfigure[Colored Label]{
+			\includegraphics[width=.4\textwidth]{figures/LabelB.eps}
+    			\label{fig:labelb}
+		}
+  	      \caption{}
+	\end{figure}
 
-  In the Hough transform, each possible line pixel \((x, y)\) in the image is transformed into a discrete set of points \((\theta_{i},r_{i})\) which satisfy:
-  \begin{equation}
-	  x \cos \theta_{i} + y \sin \theta = r_{i} 
-  \end{equation}
-  The pairs \((\theta_{i},r_{i})\) are accumulated in a matrix structure where lines appear as large values as shown in Figure \ref{fig:Hough}. To speed the search for relevant lines, our implementation only considers possible line directions that are either parallel or perpendicular to the maximal value of the accumulator array. Once these lines are located, they are identified as either interior or exterior field lines based upon their position, then used to aid in localization.
-  \begin{figure}[H]
-	  \centering
-	  \includegraphics[width=0.8\textwidth]{figures/Hough.eps}
- 		\caption{Hough transformation for field line detection in images.}
-  	\label{fig:Hough}
-  \end{figure}
 
+
+	The next step is object detection on colored labels. Connected regions are recognized as either connected components or edge regions, and objects are recognized from the statistics - such as the bounding box of the region, the centroid location, and the chord lengths in the region - of the colored regions. In this manner, the location of the ball and goal posts are detected. 
+
+	Field line recognition follows a slightly more complicate routine. Once all white pixels surrounded by green are located, a Hough transform is used to search for relevant line directions. In the Hough transform, each possible line pixel \((x, y)\) in the image is transformed into a discrete set of points \((\theta_{i},r_{i})\) which satisfy:
   
-  \subsection{Calibrating and Debugging}
+	\begin{equation}
+		x \cos \theta_{i} + y \sin \theta = r_{i} 
+	\end{equation}
+
+	The pairs \((\theta_{i},r_{i})\) are accumulated in a matrix structure where lines appear as large values as shown in Figure \ref{fig:Hough}. After these lines are located, they are identified as either interior or exterior field lines based upon their position.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{figures/Hough.eps}
+		\caption{Hough transformation for field line detection in images.}
+  		\label{fig:Hough}
+	\end{figure}
+
+\subsection{More Details on Object Detection}
+
+
+\subsubsection{Goalpost Detection}
+
+
+\subsubsection{Line Detection}
+
+
+\subsubsection{Ball Detection}
+
+
+\subsection{Self-Localization}
+	The problem of knowing the location of robots on the field is handled by a probabilistic model incorporating information from visual landmarks such as goals and lines, as well as odometry information from the effectors. Recently, probabilistic models for pose estimation such as extended Kalman filters, grid-based Markov models, and Monte Carlo particle filters have been successfully implemented. Unfortunately, complex probabilistic models can be difficult to implement in real-time due to a lack of processing power on robots. This issue is addressed with a pose estimation algorithm that incorporates a hybrid Rao-Blackwellized representation that reduces computational time, while still providing a high level of accuracy. The algorithm models the pose uncertainty as a distribution over a discrete set of heading angles and continuous translational coordinates. The distribution over poses \((x,y,\theta)\), where \((x,y)\) are the two-dimensional translational coordinates of the robot on the field, and $\theta$ is the heading angle, is first generically decomposed into the product:
+
+	\begin{equation}
+		P(x,y,\theta) = P(\theta)P(x,y|\theta) = \sum\limits_{i} P(\theta_{i})P(x,y,|\theta_{i})
+	\end{equation}
+
+ 	The distribution $P(\theta)$ is modeled as a discrete set of weighted samples $\{\theta_{i}\}$, and the conditional likelihood $P(x,y|\theta)$ as simple two-dimensional Gaussian. This approach has the advantage of combining discrete Markov updates for the heading angle with Kalman filter updates for translational degrees of freedom.
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=.6\textwidth]{figures/RaoBlackwell.eps}
+		\caption{Rao-Blackwellized probabilistic representation used for localization.}
+		\label{fig:raoblack}
+	\end{figure}
+ 
+	This algorithm enables robots to quickly incorporate visual landmarks and motion information to consistently estimate both the heading angle and translation coordinates on the field as shown in Figure \ref{fig:raoblack}. Even after the robots are lifted ('kidnapped') by the referees, they will quickly re-localize their positions when they see new visual cues.	
+
+\subsubsection{Particle Initialization}
+	The localization algorithm utilizes 200 particles to estimate the position of the robot. Properly initializing the positions of the particles helps improve the accuracy of the localization algorithm. Before the game starts, the particles are initialized on the sides of the defending half of the field, as shown in Figure \ref{fig:Init}. In the Set state, if the robot is not manually replaced, its particles are initialized near the possible initial positions defined in our game strategy. Besides, during the game, when a robot falls down, its localization particles' heading angles are reinitialized.
+    
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{figures/InitParticles}    
+		\caption{Initialization of particles before game starts.}
+		\label{fig:Init}
+	\end{figure}
+
+\subsubsection{Odometry, Landmark Observation and Re-sampling}
+	A Kalman filter is implemented to track the continuous change on the position and weight of each particle. The filtering is a product of two steps: the motion model update and the measurement update. The motion model update - also referred to as the odometry update - utilizes the robot kinematics to update the particle filter as the robot walks around the field. Given the joint angles of the robot, forward kinematics is used to compute the location of the robot's feet as it walks. The change in translation and rotation of the body of the robot are computed based on the position of the feet, as shown in Figure \ref{fig:odometry}, and used to update the particle filter.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{figures/Odometry.eps}
+		\caption{Visualization of the odometry calculation after one step.}
+		\label{fig:odometry}
+	\end{figure}
+
+	The measurement model refines this estimate using sensory inputs, such as vision-based landmark detection.  The measurement model incorporates positions of landmarks to adjust the particle positions and their weights in the filter. Positions of landmarks are weighted based upon their reliability. For instance, goal post detection is considered convincing and used to correct both the position and the direction of the robot. Meanwhile, corner and line detections are only used to correct the direction due to large variance in their position calculation.
+
+	The algorithm re-samples every 0.1 seconds. A stratification method is used to redraw all  particles so that the ones with higher weight will stay. Figure \ref{fig:particlesafter} illustrate the result of self-localization.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=.6\textwidth]{figures/FocusedParticles.eps}
+	  	\caption{The robot weighs different landmark positions to establish an accurate estimation of its position on the field.}
+		\label{fig:particlesafter}
+  	\end{figure}
+
+\subsubsection{Error Correction}
+	One great challenge with self-localization in the Standard Platform League is the symmetric field. Under ideal circumstances where the robot's starting position is known, the basic particle filter approach alone is enough to keep track of the correct robot pose. However, noise in the motion model, inevitable false positive detections of landmarks, and falling down, will all eventually cause the robot to converge on a pose that is symmetrically opposite the true location. A team correcting mechanism based on goalie ball information is introduced.
+
+	Since the goalie mostly stays in penalty box and close to the defending goal posts, it should be more confident about the location of itself and the ball than other robots on field. The correcting mechanism works when a player robot and the goalie see the ball simultaneously but believe the ball is on different sides of the field. Under such circumstances, it is very likely that the player robot's localization is flipped and its particles will be flipped back against the center of the field.
+
+	Moreover, robots are very likely to generate localization error when they fall over near the center of the field. The correcting mechanism labels these robots as "confused players", which will not make direct shots to goal. Instead, they will dribble or slightly kick the ball until the goalie sees the ball and confirms their positions.
+
+\begin{comment}
+\subsection{Calibrating and Debugging}
     \subsubsection{Monitoring}    
       To debug the vision code, we developed a tool to receive image packets from an active robot and display them. To this end, we broadcast YUYV images,as well as two ’labeled’ images. The YUYV images represent what a robot is literally seeing at any given time, and the labeled images depict what the robot thinks it is seeing at that same time. We programmed a GUI in MATLAB which receives these packets, reconstruct them, and then displays them for the user to see. Through the use of this debugging tool, it is possible for us to test and improve our color look up tables with ease.
       \begin{figure}[H]
@@ -125,7 +229,7 @@
     		\label{fig:monitor}
 	    \end{figure}
  
-    \subsubsection{Setting Camera Parameters}
+    \subsubsection{Camera Parameters}
       Since vision depends highly on the quality of pictures from the camera, setting camera parameters (i.e. Exposure, Contrast, and Saturation) properly is crucial to the developing and debugging of vision code. To get better images and change parameters easily, the camera driver was modified and a Lua script was developed. Figures \ref{fig:topparams} and \ref{fig:bottomparams} display a set of camera parameter values. These parameters should make the top and bottom camera visually appear as similar as possible because both cameras’ feeds are converted using the same colortable.
  	    \begin{figure}[H]
     		\centering
@@ -142,7 +246,7 @@
     		\caption{Example camera parameters.}	
 	    \end{figure}
 
-	  \subsubsection{Colortables}
+	  \subsubsection{Building Colortables}
 	    After camera parameters are set, pictures are taken from both cameras. Color segmentation training is then conducted through a Colortable Selection Tool, where colors of interest are associated with specific YCbCr values by a single click. Depending on the threshold value used, connected regions to the pixel clicked are also highlighted if their YCbCr values are close.
 	In order to eliminate noise, we first process image packets with color definitions using a Gaussian mixture model that analyzes the probability density function of defined pixel values in conjunction with Bayes' Theorem, which expands boundaries of the color classes. As seen in the transition from Figure \ref{fig:unprocessed} to Figure \ref{fig:processed}, defined colors are displayed as a single shade in Label Mode A. Undefined colors show as black colors.
 	
@@ -180,83 +284,7 @@
       \end{itemize}
   
       To better test our vision code, we developed the camera simulator in MATLAB. Instead of getting images from the robot, the simulator takes images from previous logs (generated by the logging tool) and pushes these data into the shared memory. Image processing codes can then run based on the logged images. This tool enables the user to debug the vision code without the use of a robot.
-
-
-  \subsection{Updates to Vision Code}
-	  \subsubsection{Changes in Line and Corner Detection}
-	    More checking routines have been added to line and corner detection to eliminate false-positives. Normally after first conducting a basic white and green pixel check, white blobs are put through various tests to determine whether they are lines or corners. As seen in Figure \ref{fig:linedetect}, these tests are crucial as there is often a lot of white noise in the background that would result in false-positives. Line and corner tests include ground checks, cross checks, line overlap checks, length-width ratio thresholds, horizon checks, and an in-field check. 
-
-	    One important addition to our line tests was a distance check. Line detection from far away is useless anyways due to size fluctuation caused by noise and/or not enough white pixels surviving the transition from Label Mode A to Label Mode B. Lines that appear too close or too far away pose the risk of throwing off the robot's localization.
-      \begin{figure}[H]
-		    \centering
-    		\includegraphics[width=.6\textwidth]{figures/BLineDetect.eps}
-		    \caption{Only a true white line detected in Label Mode B}
-		    \label{fig:linedetect}
-    	\end{figure}
-	
-      In regards to corner detection, a new addition to our tests was the elimination of the center circle by means of location on field. False corners are often detected on the surface of the center circle, causing localization to be inaccurate. Ultimately, line and corner detection are low-weighted contributions to localization that are designed to pick up \textit{most} lines and corners rather than \textit{all} lines and corners in order to avoid detecting even a \textit{few} false lines and corners.
-
-    \subsubsection{Changes in Spot and Ball Detection}
-      Spot and ball detection code were updated to include successful tests from line and corner detection. Such changes include the addition of a distance check and a check for field opposite the part of a ball or spot partially cut off by the camera at the periphery of its vision. Both changes made the detection of false balls much more unlikely and did not seem to hinder the detection of true balls while in competition.
-
-    \subsubsection{Changes in Goal Detection}
-      The variance in goal distance calculation has always been a crucial source of error in vision and localization. As a quick fix to the problem with the Nao robot miscalculating its distance away from goal posts by a uniform number from any point on a field, we implemented a goal distance factor. This factor multiplies the distance from the goal that the localization code uses. Before every match, we simply needed to update the factor after placing the robot at different distances from the goal posts.
-
-
-
-\section{Localization}
-  The problem of knowing the location of robots on the field is handled by a probabilistic model incorporating information from visual landmarks such as goals and lines, as well as odometry information from the effectors. Recently, probabilistic models for pose estimation such as extended Kalman filters, grid-based Markov models, and Monte Carlo particle filters have been successfully implemented. Unfortunately, complex probabilistic models can be difficult to implement in real-time due to a lack of processing power on board the robots. We address this issue with a pose estimation algorithm that incorporates a hybrid Rao-Blackwellized representation that reduces computational time, while still providing a high level of accuracy. Our algorithm models the pose uncertainty as a distribution over a discrete set of heading angles and continuous translational coordinates. The distribution over poses \((x,y,\theta)\), where \((x,y)\) are the two-dimensional translational coordinates of the robot on the field, and $\theta$ is the heading angle, is first generically decomposed into the product:
-	\begin{equation}
-		P(x,y,\theta) = P(\theta)P(x,y|\theta) = \sum\limits_{i} P(\theta_{i})P(x,y,|\theta_{i})
-	\end{equation}
- 	We model the distribution $P(\theta)$ as a discrete set of weighted samples $\{\theta_{i}\}$,	and the conditional likelihood $P(x,y|\theta)$ as simple two-dimensional Gaussian. This approach has the advantage of combining discrete Markov updates for the heading angle with Kalman filter updates for translational degrees of freedom.
-  \begin{figure}[H]
-		\centering
-		\includegraphics[width=.6\textwidth]{figures/RaoBlackwell.eps}
-		\caption{Rao-Blackwellized probabilistic representation used for localization.}
-		\label{fig:raoblack}
-	\end{figure}
- 
-	When this algorithm is implemented on the robots, they quickly incorporate visual landmarks and motion information to consistently estimate both the heading angle and translation coordinates on the field as shown in Figure \ref{fig:raoblack}. Even after the robots are lifted ('kidnapped') by the referees, they quickly re-localize their positions when they see new visual cues.	
-
-
-  \subsection{Particle Initialization}
-	  Our algorithm utilizes 200 particles to estimate the position of the robot. Properly initializing the positions of the particles helps improve the accuracy of the localization algorithm. Before the game starts, in the Ready state, the particles are initialized on the sides of the defending half of the field, as shown in Figure \ref{fig:Init}. In the Set state, if the robot is not manually replaced, its particles are initialized near the possible initial positions defined in our game strategy. Besides, during the game, when a robot falls down, its localization particles' heading angles are reinitialized.
-    \begin{figure}[H]
-      \centering
-      \includegraphics[width=0.6\textwidth]{figures/InitParticles}    
-      \caption{Initialization of particles before game starts.}
-      \label{fig:Init}
-    \end{figure}
-
-		
-  \subsection{Odometry, Landmark Observation and Re-sampling}
-	  A Kalman filter is implemented to track the continuous change on the position and weight of each particle. The filtering is a product of two steps: the motion model update and the measurement update. The motion model update - also referred to as the odometry update - utilizes the robot kinematics to update the particle filter as the robot walks around the field. Given the joint angles of the robot, forward kinematics is used to compute the location of the robot's feet as it walks. The change in translation and rotation of the body of the robot are computed based on the position of the feet, as shown in Figure \ref{fig:odometry}, and used to update the particle filter.
-    \begin{figure}[H]
-      \centering
-      \includegraphics[width=0.6\textwidth]{figures/Odometry.eps}
-      \caption{Visualization of the odometry calculation after one step.}
-      \label{fig:odometry}
-    \end{figure}
-
-    The measurement model refines this estimate using sensory inputs, such as vision-based landmark detection. As previously mentioned in this paper, our vision model is able to detect and calculate the three-dimensional position of different landmarks, including: goal posts, field lines, and corners. The measurement model incorporates these data to adjust the particle positions and their weights in the filter. Due to the difference in reliability of different landmark detections, we incorporate different types of observed landmark positions differently. For instance, while goal post detection is used to correct both the position and heading angles, corner and line detections are mainly used to correct the heading angles since the variance in their position calculation is relatively large.
-
-	  Our algorithm re-samples all of the particles every 0.1 seconds. We use the stratification method to redraw all of the particles so that the ones with higher weight will stay. Figure \ref{fig:particlesafter} illustrate the result of our algorithm. While the robot is moving on field, the particles are drawn in our debugging tool.
-    \begin{figure}[H]
-		  \centering
-  	  \includegraphics[width=.6\textwidth]{figures/FocusedParticles.eps}
-	  	\caption{The robot takes in and weighs landmarks to establish an accurate estimation of its position on the field.}
-		  \label{fig:particlesafter}
-  	\end{figure}
-
-
-  \subsection{Error Correction}
-	  One great challenge in the Standard Platform League is the symmetric field. Under ideal circumstances where the robot's starting position is known, the basic particle filter approach alone is enough to keep track of the correct robot pose. However, noise in the motion model, inevitable false positive detections of landmarks, and falling down, will all eventually cause the robot to converge on a pose that is symmetrically opposite the true location. This year, the problem is further complicated by the increase in the size of competition fields, which results in higher variance in vision detection. To address this problem, we use the team correcting mechanism based on goalie ball information.
-
-	  For most of the cases, the goalie stays in the penalty box, and it stays close to the defending goal posts. Therefore, among the five players on the field, the goalie is most confident about its location, as well as the detected ball position. During the game, if a player robot and the goalie see the ball simultaneously but they believe the ball is on different sides of the field, it is very likely that the player robot's localization is flipped. Under such circumstances, its particles will be flipped according to the center of the field.
-
-	  Moreover, since the robots are very likely to generate localization error when they fall over near the center of the field, we label robots that fall near the center as "confused players". Such players will not make direct shots when they see the ball. Instead, they will dribble or walk-kick the ball until the goalie sees the ball and confirms their positions.
-
+\end{comment}
 
 
 \section{Motion - Jianqiao}
@@ -392,29 +420,6 @@
 				\item[headTrackGoalie] Goalie-specific: Track the approaching ball.
 			\end{description}
 		\end{multicols}
-
-	\subsection{Changing Behaviors}
-		Adding new states is fairly simple to do. First, a declaration of a new state, followed by its relevant transitions, must be set in the head file (\texttt{BodyFSM.lua} or \texttt{HeadFSM.lua}).
-	  \begin{lstlisting}
-      require('NEW_STATE')
-      ..
-      sm:add_state(NEW_STATE)
-      ..
-      sm:set_transition(NEW_STATE, 'return-condition', NEXT_STATE)
-      sm:set_transition(PREVIOUS_STATE, 'return-condition', NEW_STATE)
-	  \end{lstlisting}
-		Then the new state file must be placed in the same folder as the head file, and must contain an entry, update, and exit function.
-	  \begin{lstlisting}
-      function entry()
-	    #actions
-      ..
-      function update()
-	    #actions
-      ..
-      function exit()
-	    #actions
-	  \end{lstlisting}
-	  In this way, new behaviors can quickly be added or existing ones modified as required.
 
   \subsection{Updates in State Machines for 2013}
     For the Body State Machine, one important improvement is the approach method. Instead of the traditional direct approach method, this year we implemented the curvature approach method, as illustrated in \ref{fig:lineapproach}, which enables the robots to quickly reach and kick the ball. We built it through careful calculation of the robot's approaching path: basically speaking, the desired position of the robot in each cycle of the state machine is changing with the attacking angle. As the robot gradually rotates to face the goal, its destination moves closer to the ball, which results in a curved path.  

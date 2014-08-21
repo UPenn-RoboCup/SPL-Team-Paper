@@ -58,6 +58,7 @@
 
 	Low-level interactions with hardware are implemented using compiled C libraries in conjunction with the Nao's on-board hardware controller (NaoQi) or custom controllers. These in turn, are called via Lua scripts, and allow for control over motor positions, motor stiffnesses, and LED's. Sensory feedback is also handled similarly, allowing users to get data from a variety of sources such as the Nao's two on-board cameras, foot weight sensors, the inertial measurement unit (IMU), and the ultrasound microphones.
 
+
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=1.0\textwidth]{figures/SoftArchOverview.eps}
@@ -280,17 +281,18 @@ After we get the body pose and feet poses, the inverse kinematics module is used
   		\label{fig:Hough}
 	\end{figure}
 
-\subsection{More Details on Object Detection - Chris \& Junda}
+\subsection{Updates to Vision Code - Chris \& Junda}
 
 
-\subsubsection{Goalpost Detection}
+\subsubsection{Changes in Goalpost Detection}
+	In order to improve last year's method of determining the distance between the goalpost and the nao robot (using a goalpost distance factor that requires calibration on different fields), different formulas were used to try to scale the goalpost distance factor based on the estimated distance between the robot and goalpost.  After much trial and error, a simple piecewise function proved very reliable with the goalpost distance factor taking a smaller value when nearby the goalposts and a larger value when farther away.  
 
+\subsubsection{Changes in Line and Spot Detection} 
+	
 
-\subsubsection{Line Detection}
-
-
-\subsubsection{Ball Detection}
-
+\subsubsection{Changes in Ball Detection}
+	Last year, differentiating between actual balls and pink robot jerseys proved difficult. This issue should have been handled by a height check and min/max pixel checks, but false balls still passed these tests. In order to address this problem, robot pink was added to the color map so that any potential balls with too much robot pink would fail. After experimenting with fillrate and a simple max threshold for the amount of pink pixels allowed, it was determined that the max threshold test worked best.  		
+	Other major modifications included an area-distance check that eliminated potential balls thats size did not scale correctly with their distance away from the nao robot and the addition of a major-minor axis check to make sure that the general shape of potential balls made sense.  These changes greatly improved the reliability of ball detection without eliminating true balls.
 
 \subsection{Self-Localization}
 	The problem of knowing the location of robots on the field is handled by a probabilistic model incorporating information from visual landmarks such as goals and lines, as well as odometry information from the effectors. Recently, probabilistic models for pose estimation such as extended Kalman filters, grid-based Markov models, and Monte Carlo particle filters have been successfully implemented. Unfortunately, complex probabilistic models can be difficult to implement in real-time due to a lack of processing power on robots. This issue is addressed with a pose estimation algorithm that incorporates a hybrid Rao-Blackwellized representation that reduces computational time, while still providing a high level of accuracy. The algorithm models the pose uncertainty as a distribution over a discrete set of heading angles and continuous translational coordinates. The distribution over poses \((x,y,\theta)\), where \((x,y)\) are the two-dimensional translational coordinates of the robot on the field, and $\theta$ is the heading angle, is first generically decomposed into the product:

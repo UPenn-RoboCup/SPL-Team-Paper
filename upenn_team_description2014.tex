@@ -84,6 +84,135 @@
 
 
 
+\section{Motion}
+	Motion is controlled by a dynamic walk module combined with predetermined scripted motions. One main development has been a bipedal walk engine that allows for fast, omni-directional motions. IMU feedback is used to modulate the commanded joint angles and phase of the gait cycle to provide for further stability during locomotion. In this way, minor disturbances such as carpet imperfections and bumping into obstacles do not cause the robot to fall over. The robot has several powerful kick motions using pre-defined keyframes and a ZMP walk-kick for quicker reaction. We are also using keyframes for our get-up motions under different battery levels.
+
+\subsection{Walk}
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{figures/WalkOverView.png}
+		\caption{Overview of the walk controller}
+	\end{figure}
+
+	The walk engine generates trajectories for the robot's center of mass (COM) based upon desired translational and rotational velocity settings. The module then computes optimal foot placement given this desired body motion. Inverse kinematics (IK) are used to generate joint trajectories so that the zero moment point (ZMP) is over the support foot during the step. This process is repeated to generate alternate support and swing phases for both legs.
+
+\subsubsection{Step controller}
+	The step controller determines the parameters of each step give different commended velocity and hardware parameters. Each step is defined as 
+
+	\begin{eqnarray*}
+		STEP_i=\{SF,t_{step},L_i,T_i,R_i,L_{i+1},T_{i+1},R_{i+1}\}
+	\end{eqnarray*}
+	
+	where SF denotes the support foot, $t_{step}$ is the duration of the step, $L_i,R_i,T_i$ and $L_{i+1},R_{i+1},T_{i+1}$ are the initial and final 2D poses of left foot, right foot and torso. $L_i,R_i,T_i$ are the final poses from the last step, $L_{i+1},R_{i+1}$ are calculated using the commended velocity. Foot reachability and self-collision constraints are also considered given different configurations in the pre-defined walk setting file, as shown below.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=.60\textwidth]{figures/WalkFile.eps}
+		\caption{Example parameters for one of our walk files.}
+	\end{figure}
+
+	To get the most stable posture, the center of mass should lies on the middle point of two feet. Thus the target torso pose $T_{i+1}$ is set to the midpoint of $L_{i+1}$ and $R_{i+1}$.
+Given the initial and final position of the feet and torso, the reference ZMP trajectory $p_i(\phi)$ as the following piecewise-linear function for the left support case
+$$ p_i(\phi)=\left\{
+\begin{array}{rcl}
+T_i(1-\frac{\phi}{\phi_1})+L_i \frac{\phi}{\phi_1} & & 0 \leq \phi < \phi_1\\
+L_i & & \phi_1 \leq \phi < \phi_2\\
+T_i(1-\frac{1-\phi}{1-\phi_2})+L_i \frac{1-\phi}{1-\phi_2} & & \phi_2 \leq \phi < 1\\
+\end{array} \right. $$
+where $\phi$ is the walk phase and $\phi_1,\phi_2$ are the timing parameters determining the duration of single support phase and double support phase.
+
+\subsubsection{Trajectory controller}
+	The trajectory controller generates torso and foot trajectories for the current step. We first define $\phi_{single}$ as the single support walk phase
+$$ \phi_{single}=\left\{
+\begin{array}{rcl}
+0 & & 0 \leq \phi < \phi_1\\
+\frac{\phi-\phi_1}{\phi_2-\phi_1} & & \phi_1 \leq \phi < \phi_2\\
+1 & & \phi_2 \leq \phi < 1\\
+\end{array} \right. $$
+We then define a parameterized trajectory function
+$$f_x(\phi)=\phi^{\alpha}+\beta \phi(1-\phi)$$
+to generate the foot trajectories
+$$L_i(\phi_{single})=L_{i+1}f_x(\phi_{single})+L_i(1-f_x(\phi_{single}))$$
+$$R_i(\phi_{single})=R_{i+1}f_x(\phi_{single})+R_i(1-f_x(\phi_{single}))$$
+The torso trajectory $x_i(\phi)$ is calculated by modeling the robot as a inverted pendulum. Thus
+$$p=x-t_{ZMP}\ddot x$$
+With the reference ZMP trajectory we defined before, the $x_i(\phi)$ during the step with zero ZMP error should be
+$$ x_i(\phi)=\left\{
+\begin{array}{rcl}
+p_i(\phi)+a_i e^{\frac{\phi}{\phi_{ZMP}}}+b_i e^{-\frac{\phi}{\phi_{ZMP}}}-\phi_{ZMP}m_i sinh \frac{\phi-\phi_1}{\phi_{ZMP}}& & 0 \leq \phi < \phi_1\\
+p_i(\phi)+a_i e^{\frac{\phi}{\phi_{ZMP}}}+b_i e^{-\frac{\phi}{\phi_{ZMP}}} & & \phi_1 \leq \phi < \phi_2\\
+p_i(\phi)+a_i e^{\frac{\phi}{\phi_{ZMP}}}+b_i e^{-\frac{\phi}{\phi_{ZMP}}}-\phi_{ZMP}n_i sinh \frac{\phi-\phi_1}{\phi_{ZMP}} & & \phi_2 \leq \phi < 1\\
+\end{array} \right. $$
+where $phi_{ZMP}=t_{ZMP}/t_{STEP}$. $m_i,n_i$ are ZMP slopes defined as following for left support case
+$$m_i=\frac{L_i-T_i}{\phi_1},\;\;n_i=-\frac{L_i-T_{i+1}}{1-\phi_2}$$
+and for right support case
+$$m_i=\frac{R_i-T_i}{\phi_1},\;\;n_i=-\frac{R_i-T_{i+1}}{1-\phi_2}$$
+$a_i,b_i$ can then be calculated given the boundary condition $x_i(0)=T_i$ and $x_i(1)=T_{i+1}$. The resulting ZMP and torso trajectory are shown below
+
+\begin{figure}[H]
+		\centering
+		\includegraphics[width=1\textwidth]{figures/ZMP.eps}
+		\caption{An example for a reference ZMP trajectory and corresponding torso trajectory.}
+	\end{figure}
+After we get the body pose and feet poses, the inverse kinematics module is used to calculate angles for each joints so that the robot can actually walk as we desired.
+
+\subsubsection{Feedback controller}
+	The feedback controller takes in the sensor information from the robot during the walk and tries to stabilize it by controlling the ankle joints, knee joints and hip joints. Right now we are using the roll and pitch angles as inputs for several simple PD controllers. Knee and hip joints are used to overcome pitch errors while ankle joints are used for roll error. If the pitch angle or roll angle is higher than a threshold, the walk motion will be stopped. This can be caused by other robot pushing our robot during a game.   
+  
+\subsection{Kicks}
+	  Our kicks this year are a combination of scripted keyframes and ZMP-based kicks. Of our three kicks -- standing, walk, and side -- only the walk-kick utilizes the new ZMP engine. The old-fashioned style kicks are created by specifying motor positions and timings, and must be carefully tuned by hand in order to ensure balance, stability, and power. The new kicks are inherited from our merge with Team DARwIn. Similar to how the walk engine calculates joint positions in response to motion requests of the COM and ZMP, our newer kick calculates the way that the robot needs to balance in order to perform faster and more powerful kicks.  
+\begin{comment}
+	  While we utilized a mix of a keyframed standing and keyframed walk-kick during the US Open to great success, after transitioning to the ZMP walk-kick, we used this newer kick solely during our matches in Eindhoven. This allowed us to have greater control over the ball, and react quicker than opponent robots which would approach a ball and take excessive time during their keyframe motions to do a kick.
+\end{comment}
+  
+\subsection{Get up}
+	Our get up motions are all defined by several keyframe files. A keyframe file consists of a series of frames, snapshots of the 22 motor positions along with a timing by which those positions must be reached from the previous frame. Though the motors natively read and write radians to their encoder, we use degrees and convert them later for better readability.
+	
+	\begin{lstlisting}
+  	  	angles = vector.new({
+	  		0.1, 25.5,
+		  	109.8, 11.0, -88.9, -21.4,
+  			-13.7, -0.3, 17.1, -5.6, 5.2, 7.6,
+	  		0.0, -1.8, 14.6, -1.1, 4.9, -2.7,
+		  	109.9, -10.2, 88.7, 19.9,
+  	  	})*math.pi/180,
+	duration = 0.400;
+	\end{lstlisting}
+
+  	The motors in order are:
+
+	\begin{multicols}{3}
+		\begin{enumerate}
+			\item HeadYaw
+  			\item HeadPitch
+	  		\item LShoulderPitch
+		  	\item LShoulderRoll
+			\item LElbowYaw
+  			\item LElbowRoll
+	  		\item LHipYawPitch
+		  	\item LHipRoll
+			\item LHipPitch
+  			\item LKneePitch
+	  		\item LAnklePitch
+		  	\item LAnkleRoll
+			\item RHipYawPitch
+  			\item RHipRoll
+	  		\item RHipPitch
+		  	\item RKneePitch
+			\item RAnklePitch
+  			\item RAnkleRoll
+	  		\item RShoulderPitch
+		  	\item RShoulderRoll
+			\item RElbowYaw
+  			\item RElbowRoll
+		\end{enumerate}
+	\end{multicols}
+
+	These keyframes are hand-tuned based upon experimentation. To prolong the life of our robots, we do most of the heavy keyframe testing in Webots and then port it to the robots and perform final checks to verify full functionality. Some keyframes can make the robot get up is 6 seconds, which is much faster than some other get up motions. However, the get up motion performance is highly depends on the battery level and the hardware condition. During our test, many robots cannot get up with fast motions if their battery levels are lower than 8, or if they have a broken joint. To avoid keep picking up our robots during a real game because they cannot get up, we set each robot to have two get up motions. The default get up motion is set to be the fast one. If the battery level is lower than a threshold, or the robot have failed to get up once, it will switch to the slow get up motion. This change helped us a lot in Joao Pessoa. 
+
+
+
 \section{Cognition}
 	The cognition module acquires visual information from cameras and returns locations of key objects on the field, as well as the position of the robot itself. Figure \ref{fig:cog} shows the framework of the cognition module. 
 
@@ -271,132 +400,6 @@ A vision simulator is designed to open and run image processing on these log fil
 		\label{fig:colortable}
 	\end{figure}
 
-
-
-
-\section{Motion}
-	Motion is controlled by a dynamic walk module combined with predetermined scripted motions. One main development has been a bipedal walk engine that allows for fast, omni-directional motions. IMU feedback is used to modulate the commanded joint angles and phase of the gait cycle to provide for further stability during locomotion. In this way, minor disturbances such as carpet imperfections and bumping into obstacles do not cause the robot to fall over. The robot has several powerful kick motions using pre-defined keyframes and a ZMP walk-kick for quicker reaction. We are also using keyframes for our get-up motions under different battery levels.
-
-	
-\begin{comment}
-	For our 2013 season, the underlying walk engine described above was not altered; the only changes were made to parameter files dictating a few controllable variables. Depending on the surface of play, a number of these parameters need to be tuned. These include the body and step height, percentages of single- and double-support, velocity and acceleration limits, and gyroscopic feedback. These parameters are tuned by hand, and a skilled operator is able to watch a robot stumble on a new surface and know exactly what needs to be tweaked. We also opted to use a slow and stable walk that remained mostly unchanged throughout the week, opting to dedicate our efforts to behavioral and localization improvements.
-
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=.60\textwidth]{figures/WalkFile.eps}
-		\caption{Example parameters for one of our walk files.}
-	\end{figure}
-\subsection{Walk}
-\end{comment}
-
-\subsection{Walk}
-	\begin{figure}[H]
-		\centering
-		\includegraphics[width=1\textwidth]{figures/WalkOverView.png}
-		\caption{Overview of the walk controller}
-	\end{figure}
-The walk engine generates trajectories for the robot's center of mass (COM) based upon desired translational and rotational velocity settings. The module then computes optimal foot placement given this desired body motion. Inverse kinematics (IK) are used to generate joint trajectories so that the zero moment point (ZMP) is over the support foot during the step. This process is repeated to generate alternate support and swing phases for both legs.
-\subsubsection{Step controller}
-The step controller determines the parameters of each step give different commended velocity and hardware parameters. Each step is defined as 
-\begin{eqnarray*}
-STEP_i=\{SF,t_{step},L_i,T_i,R_i,L_{i+1},T_{i+1},R_{i+1}\}
-\end{eqnarray*}
-where SF denotes the support foot, $t_{step}$ is the duration of the step, $L_i,R_i,T_i$ and $L_{i+1},R_{i+1},T_{i+1}$ are the initial and final 2D poses of left foot, right foot and torso. $L_i,R_i,T_i$ are the final poses from the last step, $L_{i+1},R_{i+1}$ are calculated using the commended velocity. Foot reachability and self-collision constraints are also considered given different configurations in the pre-defined walk setting file, as shown below.
-\begin{figure}[H]
-		\centering
-		\includegraphics[width=.60\textwidth]{figures/WalkFile.eps}
-		\caption{Example parameters for one of our walk files.}
-	\end{figure}
-To get the most stable posture, the center of mass should lies on the middle point of two feet. Thus the target torso pose $T_{i+1}$ is set to the midpoint of $L_{i+1}$ and $R_{i+1}$.
-Given the initial and final position of the feet and torso, the reference ZMP trajectory $p_i(\phi)$ as the following piecewise-linear function for the left support case
-$$ p_i(\phi)=\left\{
-\begin{array}{rcl}
-T_i(1-\frac{\phi}{\phi_1})+L_i \frac{\phi}{\phi_1} & & 0 \leq \phi < \phi_1\\
-L_i & & \phi_1 \leq \phi < \phi_2\\
-T_i(1-\frac{1-\phi}{1-\phi_2})+L_i \frac{1-\phi}{1-\phi_2} & & \phi_2 \leq \phi < 1\\
-\end{array} \right. $$
-where $\phi$ is the walk phase and $\phi_1,\phi_2$ are the timing parameters determining the duration of single support phase and double support phase.
-\subsubsection{Trajectory controller}
-The trajectory controller generates torso and foot trajectories for the current step. We first define $\phi_{single}$ as the single support walk phase
-$$ \phi_{single}=\left\{
-\begin{array}{rcl}
-0 & & 0 \leq \phi < \phi_1\\
-\frac{\phi-\phi_1}{\phi_2-\phi_1} & & \phi_1 \leq \phi < \phi_2\\
-1 & & \phi_2 \leq \phi < 1\\
-\end{array} \right. $$
-We then define a parameterized trajectory function
-$$f_x(\phi)=\phi^{\alpha}+\beta \phi(1-\phi)$$
-to generate the foot trajectories
-$$L_i(\phi_{single})=L_{i+1}f_x(\phi_{single})+L_i(1-f_x(\phi_{single}))$$
-$$R_i(\phi_{single})=R_{i+1}f_x(\phi_{single})+R_i(1-f_x(\phi_{single}))$$
-The torso trajectory $x_i(\phi)$ is calculated by modeling the robot as a inverted pendulum. Thus
-$$p=x-t_{ZMP}\ddot x$$
-With the reference ZMP trajectory we defined before, the $x_i(\phi)$ during the step with zero ZMP error should be
-$$ x_i(\phi)=\left\{
-\begin{array}{rcl}
-p_i(\phi)+a_i e^{\frac{\phi}{\phi_{ZMP}}}+b_i e^{-\frac{\phi}{\phi_{ZMP}}}-\phi_{ZMP}m_i sinh \frac{\phi-\phi_1}{\phi_{ZMP}}& & 0 \leq \phi < \phi_1\\
-p_i(\phi)+a_i e^{\frac{\phi}{\phi_{ZMP}}}+b_i e^{-\frac{\phi}{\phi_{ZMP}}} & & \phi_1 \leq \phi < \phi_2\\
-p_i(\phi)+a_i e^{\frac{\phi}{\phi_{ZMP}}}+b_i e^{-\frac{\phi}{\phi_{ZMP}}}-\phi_{ZMP}n_i sinh \frac{\phi-\phi_1}{\phi_{ZMP}} & & \phi_2 \leq \phi < 1\\
-\end{array} \right. $$
-where $phi_{ZMP}=t_{ZMP}/t_{STEP}$. $m_i,n_i$ are ZMP slopes defined as following for left support case
-$$m_i=\frac{L_i-T_i}{\phi_1},\;\;n_i=-\frac{L_i-T_{i+1}}{1-\phi_2}$$
-and for right support case
-$$m_i=\frac{R_i-T_i}{\phi_1},\;\;n_i=-\frac{R_i-T_{i+1}}{1-\phi_2}$$
-$a_i,b_i$ can then be calculated given the boundary condition $x_i(0)=T_i$ and $x_i(1)=T_{i+1}$. The resulting ZMP and torso trajectory are shown below
-\begin{figure}[H]
-		\centering
-		\includegraphics[width=1\textwidth]{figures/ZMP.eps}
-		\caption{An example for a reference ZMP trajectory and corresponding torso trajectory.}
-	\end{figure}
-After we get the body pose and feet poses, the inverse kinematics module is used to calculate angles for each joints so that the robot can actually walk as we desired.
-\subsubsection{Feedback controller}
-The feedback controller takes in the sensor information from the robot during the walk and tries to stabilize it by controlling the ankle joints, knee joints and hip joints. Right now we are using the roll and pitch angles as inputs for several simple PD controllers. Knee and hip joints are used to overcome pitch errors while ankle joints are used for roll error. If the pitch angle or roll angle is higher than a threshold, the walk motion will be stopped. This can be caused by other robot pushing our robot during a game.   
-  \subsection{Kicks}
-	  Our kicks this year are a combination of scripted keyframes and ZMP-based kicks. Of our three kicks -- standing, walk, and side -- only the walk-kick utilizes the new ZMP engine. The old-fashioned style kicks are created by specifying motor positions and timings, and must be carefully tuned by hand in order to ensure balance, stability, and power. The new kicks are inherited from our merge with Team DARwIn. Similar to how the walk engine calculates joint positions in response to motion requests of the COM and ZMP, our newer kick calculates the way that the robot needs to balance in order to perform faster and more powerful kicks.  
-\begin{comment}
-	  While we utilized a mix of a keyframed standing and keyframed walk-kick during the US Open to great success, after transitioning to the ZMP walk-kick, we used this newer kick solely during our matches in Eindhoven. This allowed us to have greater control over the ball, and react quicker than opponent robots which would approach a ball and take excessive time during their keyframe motions to do a kick.
-\end{comment}
-  \subsection{Get up}
-	  Our get up motions are all defined by several keyframe files. A keyframe file consists of a series of frames, snapshots of the 22 motor positions along with a timing by which those positions must be reached from the previous frame. Though the motors natively read and write radians to their encoder, we use degrees and convert them later for better readability.
-	  \begin{lstlisting}
-  	  angles = vector.new({
-	  	0.1, 25.5,
-		  109.8, 11.0, -88.9, -21.4,
-  		-13.7, -0.3, 17.1, -5.6, 5.2, 7.6,
-	  	0.0, -1.8, 14.6, -1.1, 4.9, -2.7,
-		  109.9, -10.2, 88.7, 19.9,
-  	  })*math.pi/180,
-	    duration = 0.400;
-	  \end{lstlisting}
-
-  	The motors in order are:
-	  \begin{multicols}{3}
-		  \begin{enumerate}
-			  \item HeadYaw
-  			\item HeadPitch
-	  		\item LShoulderPitch
-		  	\item LShoulderRoll
-			  \item LElbowYaw
-  			\item LElbowRoll
-	  		\item LHipYawPitch
-		  	\item LHipRoll
-			  \item LHipPitch
-  			\item LKneePitch
-	  		\item LAnklePitch
-		  	\item LAnkleRoll
-			  \item RHipYawPitch
-  			\item RHipRoll
-	  		\item RHipPitch
-		  	\item RKneePitch
-			  \item RAnklePitch
-  			\item RAnkleRoll
-	  		\item RShoulderPitch
-		  	\item RShoulderRoll
-			  \item RElbowYaw
-  			\item RElbowRoll
-	  	\end{enumerate}
-  	\end{multicols}
-These keyframes are hand-tuned based upon experimentation. To prolong the life of our robots, we do most of the heavy keyframe testing in Webots and then port it to the robots and perform final checks to verify full functionality. Some keyframes can make the robot get up is 6 seconds, which is much faster than some other get up motions. However, the get up motion performance is highly depends on the battery level and the hardware condition. During our test, many robots cannot get up with fast motions if their battery levels are lower than 8, or if they have a broken joint. To avoid keep picking up our robots during a real game because they cannot get up, we set each robot to have two get up motions. The default get up motion is set to be the fast one. If the battery level is lower than a threshold, or the robot have failed to get up once, it will switch to the slow get up motion. This change helped us a lot in Joao Pessoa. 
 
 
 \section{Behavior}

@@ -62,7 +62,7 @@
 		\centering
 		\includegraphics[width=1.0\textwidth]{figures/SoftArchOverview.eps}
 		\caption{Block Diagram of the Software Architecture.}
-		\label{}{fig:softarch}
+		\label{fig:softarch}
 	\end{figure}
 
 	Inter-process communication is accomplished via shared memory. Important information such as ball distance, position on the field, and game state are examples of shared memory variables. Any module can write and read to shared memory. In addition, any operator connected to a Nao via secure shell can monitor the data stored in the shared memory module without any change or impact on the running system, allowing for real-time on-the-fly debugging and analysis through either Lua or MATLAB.
@@ -151,7 +151,7 @@
   		\label{fig:Hough}
 	\end{figure}
 
-\subsection{More Details on Object Detection}
+\subsection{More Details on Object Detection - Chris \& Junda}
 
 
 \subsubsection{Goalpost Detection}
@@ -171,6 +171,7 @@
 	\end{equation}
 
  	The distribution $P(\theta)$ is modeled as a discrete set of weighted samples $\{\theta_{i}\}$, and the conditional likelihood $P(x,y|\theta)$ as simple two-dimensional Gaussian. This approach has the advantage of combining discrete Markov updates for the heading angle with Kalman filter updates for translational degrees of freedom.
+
 	\begin{figure}[H]
 		\centering
 		\includegraphics[width=.6\textwidth]{figures/RaoBlackwell.eps}
@@ -198,7 +199,7 @@
 		\includegraphics[width=0.6\textwidth]{figures/Odometry.eps}
 		\caption{Visualization of the odometry calculation after one step.}
 		\label{fig:odometry}
-	\end{figure}
+	\end{figure}a set of camera parameter values. These parameters should make the top and bottom camera visually appear as similar as possible because both
 
 	The measurement model refines this estimate using sensory inputs, such as vision-based landmark detection.  The measurement model incorporates positions of landmarks to adjust the particle positions and their weights in the filter. Positions of landmarks are weighted based upon their reliability. For instance, goal post detection is considered convincing and used to correct both the position and the direction of the robot. Meanwhile, corner and line detections are only used to correct the direction due to large variance in their position calculation.
 
@@ -218,73 +219,59 @@
 
 	Moreover, robots are very likely to generate localization error when they fall over near the center of the field. The correcting mechanism labels these robots as "confused players", which will not make direct shots to goal. Instead, they will dribble or slightly kick the ball until the goalie sees the ball and confirms their positions.
 
-\begin{comment}
-\subsection{Calibrating and Debugging}
-    \subsubsection{Monitoring}    
-      To debug the vision code, we developed a tool to receive image packets from an active robot and display them. To this end, we broadcast YUYV images,as well as two ’labeled’ images. The YUYV images represent what a robot is literally seeing at any given time, and the labeled images depict what the robot thinks it is seeing at that same time. We programmed a GUI in MATLAB which receives these packets, reconstruct them, and then displays them for the user to see. Through the use of this debugging tool, it is possible for us to test and improve our color look up tables with ease.
-      \begin{figure}[H]
-		    \centering
-    		\includegraphics[width=.8\textwidth]{figures/monitor.eps}
-		    \caption{Monitor for Debugging.}
-    		\label{fig:monitor}
-	    \end{figure}
- 
-    \subsubsection{Camera Parameters}
-      Since vision depends highly on the quality of pictures from the camera, setting camera parameters (i.e. Exposure, Contrast, and Saturation) properly is crucial to the developing and debugging of vision code. To get better images and change parameters easily, the camera driver was modified and a Lua script was developed. Figures \ref{fig:topparams} and \ref{fig:bottomparams} display a set of camera parameter values. These parameters should make the top and bottom camera visually appear as similar as possible because both cameras’ feeds are converted using the same colortable.
- 	    \begin{figure}[H]
-    		\centering
-		    \subfigure[Top camera]{
-    			\includegraphics[width=.3\textwidth]{figures/TopCamParams.png}
-		    	\label{fig:topparams}
-    		}
-		    \quad
-    		\subfigure[Bottom camera]{
-		    	\includegraphics[width=.3\textwidth]{figures/BottomCamParams.png}
-			    \label{fig:bottomparams}
-    		}
-		    \quad
-    		\caption{Example camera parameters.}	
-	    \end{figure}
-
-	  \subsubsection{Building Colortables}
-	    After camera parameters are set, pictures are taken from both cameras. Color segmentation training is then conducted through a Colortable Selection Tool, where colors of interest are associated with specific YCbCr values by a single click. Depending on the threshold value used, connected regions to the pixel clicked are also highlighted if their YCbCr values are close.
-	In order to eliminate noise, we first process image packets with color definitions using a Gaussian mixture model that analyzes the probability density function of defined pixel values in conjunction with Bayes' Theorem, which expands boundaries of the color classes. As seen in the transition from Figure \ref{fig:unprocessed} to Figure \ref{fig:processed}, defined colors are displayed as a single shade in Label Mode A. Undefined colors show as black colors.
+\subsection{Debugging Tools}
+\subsubsection{Monitoring}    
+	It is crucial that developers know what the robot perceives at each stage of cognition. The monitor program is designed for this purpose. It receives data packets from an active robot and display them. The transmitted data include:
 	
-     	\begin{figure}[H]
-		    \centering
-		    \subfigure[An unprocessed image]{
-			    \includegraphics[width=.4\textwidth]{figures/Unprocessed.eps}
-    			\label{fig:unprocessed}
-		    }
-    		\quad
-		    \subfigure[An image in Label Mode A]{
-    			\includegraphics[width=.4\textwidth]{figures/Processed.eps}
-		    	\label{fig:processed}
-		    }
-    		\quad
-        \caption{}
-    	\end{figure}
+	\begin{itemize}
+		\item{System Time Stamps}
+		\item{Images}
+		\item{Color-segmented Images}
+		\item{Location of Itself and Objects}
+		\item{Cognition-related Shared Memory}
+	\end{itemize}
 
-    	Next, we merge the pixels in 4x4 blocks through XOR operation assuming that target objects that are large enough that they won't be eliminated. As seen in the transition from Label Mode A to Label Mode B in Figure \ref{fig:labelb}, which is the product of these XOR's, most of the eliminated pixels were either black, undefined pixels, or noise pixels.
-  
+	A GUI is designed to display these information, as shown in Figure \ref{fig:monitor}. Developers can view the images (raw and segmented) from both on-board cameras and eye-ball check the correctness of object detections. Important debug messages are listed on the right side to provide more information on details of the cognition process.
+
       \begin{figure}[H]
-		    \centering
-    		\includegraphics[width=.5\textwidth]{figures/LabelB.eps}
-		    \caption{An image in Label Mode B}
-    		\label{fig:labelb}
-	    \end{figure}
-  
-    \subsubsection{Logging and Camera Simulator}
-      Logging information allows the user to log vision data without affecting the currently running system in any way. These vision data are usually taken when the robot is running in a real competition environment and are thus of debugging value. We used MATLAB as our main logging program. The data we record includes:
-      \begin{itemize}
-        \item[--] Time Stamp
-        \item[--] Joint Angles
-        \item[--] IMU Data
-        \item[--] YUYV Image
-      \end{itemize}
-  
-      To better test our vision code, we developed the camera simulator in MATLAB. Instead of getting images from the robot, the simulator takes images from previous logs (generated by the logging tool) and pushes these data into the shared memory. Image processing codes can then run based on the logged images. This tool enables the user to debug the vision code without the use of a robot.
-\end{comment}
+		\centering
+    		\includegraphics[width=1.0\textwidth]{figures/Monitor.png}
+		\caption{Monitor}
+    		\label{fig:monitor}
+	\end{figure}
+
+	The monitor also supports logging functionality, which stores the real time cognition information in a local file.
+A vision simulator is designed to open and run image processing on these log files. As the result, debugging can be done off-line from a robot, which greatly improves development efficiency.
+ 
+\subsubsection{Camera Calibrator}
+      Since cognition depends highly on the quality of images from the cameras, calibrating the camera parameters (i.e. Exposure, Contrast, and Saturation) is an important task. A script is written to facilitate the process. During calibrating, developers can change camera parameters by key presses and check the quality of images through the Monitor program. Figures \ref{fig:topparams} and \ref{fig:bottomparams} are screen shots of the script.
+ 	    
+	\begin{figure}[H]
+    		\centering
+		\subfigure[Top camera]{
+    			\includegraphics[width=.3\textwidth]{figures/TopCamParams.png}
+			\label{fig:topparams}
+    		}
+		\quad
+    		\subfigure[Bottom camera]{
+			\includegraphics[width=.3\textwidth]{figures/BottomCamParams.png}
+			\label{fig:bottomparams}
+    		}
+		\quad
+    		\caption{Example camera parameters.}	
+	\end{figure}
+
+\subsubsection{Colortable Tool}
+	The quality of color segmentation is also a key factor for successful cognition process. Therefore, another calibration tool is required to build robust color look-up tables. The colortable tool loads in logged images from the on-board cameras for developers to manually train the color. Developers can monitor the quality of the colortable throughout the calibration process. Figure \ref{fig:colortable} is a screen shot of the tool.
+
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=.6\textwidth]{figures/ColorSelectionTool.png}
+		\caption{The Colortable Tool}
+		\label{fig:colortable}
+	\end{figure}
+
+
 
 
 \section{Motion}
@@ -412,213 +399,161 @@ The feedback controller takes in the sensor information from the robot during th
 These keyframes are hand-tuned based upon experimentation. To prolong the life of our robots, we do most of the heavy keyframe testing in Webots and then port it to the robots and perform final checks to verify full functionality. Some keyframes can make the robot get up is 6 seconds, which is much faster than some other get up motions. However, the get up motion performance is highly depends on the battery level and the hardware condition. During our test, many robots cannot get up with fast motions if their battery levels are lower than 8, or if they have a broken joint. To avoid keep picking up our robots during a real game because they cannot get up, we set each robot to have two get up motions. The default get up motion is set to be the fast one. If the battery level is lower than a threshold, or the robot have failed to get up once, it will switch to the slow get up motion. This change helped us a lot in Joao Pessoa. 
 
 
-\section{Behavior - Sagar (add goalie statemachine)}
-	Finite state machines (FSMs) dictate the behaviors on our Naos and allow them to adapt to constantly changing conditions on the field. Updated at a speed of 100Hz, FSM's are analogous to flow charts. Our implementation of an FSM consists of a file that defines the transitions (\texttt{BodyFSM.lua} and \texttt{HeadFSM.lua} for the body and head, respectively) and a series of larger files that define specific states (i.e. \texttt{bodyPosition.lua} or \texttt{headSweep.lua}). A specific state consists of three main functions – entry, update, and exit. 
+\section{Behavior}
+	Finite state machines (FSMs) dictate the behaviors robots and allow them to adapt to constantly changing conditions on the field.  The implementation of an FSM consists of a series state definitions and one arbitrator file that defines the transitions between states. 
 
-	As their names suggest, the entry and exit functions specify actions that need to be taken when a robot first enters a state or when it finally completes a state. An example of a typical entry action is \texttt{print(\_NAME..”entry”)}, which sends a simple print statement to the main feed and tells an operator what state a robot is currently in. Exit statements tend to be empty and are simply there to facilitate state machine functionality, but occasionally contain an action such as telling the Motion module to command a stance when leaving \textit{bodyIdle}.
+	Each state consists of three stages:  \texttt{entry}, \texttt{update} and \texttt{exit}. The \texttt{entry} and \texttt{exit} stages specify actions to be taken when the robot first enters a state or finally completes a state. During the \texttt{update} stage, which is in between, the robot constantly cycles through a routine. Usually it moves on the field while querying cognition information, until certain conditions are met. For instance, in state \textit{BodySearch}, the robot rotates in place until either it detects the ball or it times out after not seeing the ball for 5 seconds. In the first case, it transits into a state of chasing the ball; in the other case, the robot transits into a state of going to the center of the field (where it has a better chance of detecting the ball).
 
-	After entering and before exiting, the Nao will constantly cycle through the body of a state (the update function), querying the environment until certain conditions are met. During \textit{bodySearch}, for example, the robot will rotate in place until either a) the ball is spotted and causes a transition to \textit{bodyPosition} to determine how far away the ball is; b) it times out after a certain amount of time has been spent updating, and will transition to \textit{bodyGoToCenter} to move the robot towards the center of the field in hopes of finding a ball.
+\subsection{The Body Finite State Machine }
+	The Body Finite State Machine (BodyFSM) is the main behavior control module. It regulates robot movements and kicks during the game. Two sets of state machines are implemented, one for normal players and the other for the goalie. The key difference is that the goalie needs hold its position and stay in the penalty box in most cases while field players need to walk around and chase the ball.
 
-	Non-goalie behaviors are described here because they apply to a majority of the robots on the field (4 out of 5). The goalie will utilize the same transition file as a regular player, but instead uses a series of states unique only to the goalie.
-
-	\subsection{The Body Finite State Machine (BodyFSM)}
-		\begin{figure}[H]
-			\centering
-			\includegraphics[width=\textwidth]{figures/BodyFSM.eps}
-			\caption{Body State Machine for a non-goalie player.}
-			\label{fig:bodyfsm}
-		\end{figure}
+\subsubsection{BodyFSM for Normal Players}	
+	Figure \ref{fig:bodyfsm} shows the transitions of states for a normal robot player. It is followed by brief descriptions of the states. The basic routine is: \texttt{Search for ball} $\to$ \texttt{Approach the ball} $\to$ \texttt{Dribble of Make a Shot}.
 		
-		The specific body states used in our 2013 code are as follows:
-		\begin{multicols}{2}
-			\begin{description}
-				\item[bodyAnticipate] Goalie specific: Prepare for the ball to come within range.
-				\item[bodyApproach] Align for kick.
-				\item[bodyChase] Ball sighted; run for ball and slow as distance decreases.
-				\item[bodyDribble] Dribble the ball.
-				\item[bodyGotoCenter] Return to the center of the field, defined as $(0,0)$.
-				\item[bodyIdle] Initial state when the main code is started up. Nao will be sitting awaiting button press or game state change to 'Ready'.
-				\item[bodyKick] Perform a standing kick.
-				\item[bodyObstacle] Obstacle detected.
-				\item[bodyObstacleAvoid] Sidestep or stop movement until the obstacle clears.
-				\item[bodyOrbit] Make fine adjustments to trajectory before kicking.
-				\item[bodyPosition] Main body state; most states will transition back here.
-				\item[bodyPositionGoalie] Main body state for the goalie.
-				\item[bodyReady] Clears temporary variables and prepares the robot to start a new half.
-				\item[bodyReadyMove] After a goal has been scored or when game state is 'Ready', returns the robot to its initial position on the field.
-				\item[bodySearch] Revolve and search for the ball.
-				\item[bodyStart] Initial state when game goes to 'Playing'; handles kickoff.
-				\item[bodyStop] Stops the robot completely.
-				\item[bodyWalkKick] Perform a kick while in motion.
-				\item[bodyUnpenalized] Commands the Nao to stand back up and walk into the field after being unpenalized.
-			\end{description}
-		\end{multicols}
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=\textwidth]{figures/BodyFSM.eps}
+		\caption{Body State Machine for a non-goalie player.}
+		\label{fig:bodyfsm}
+	\end{figure}
 		
-	\subsection{The Head Finite State Machine (HeadFSM)}
-		Because the head has far fewer degrees of freedom, it is much less complex than the FSM used for the body. Its overall functionality, however, remains the same as the body state machine.
-		\begin{figure}[H]
-			\centering
-			\includegraphics[width=.8\textwidth]{figures/HeadFSM.eps}
-			\label{fig:headfsm}
-			\caption{Head State Machine for a non-goalie player. \\Left : used while playing / Right	: Used during READY state}
-			\label{fig:headfsm}
-		\end{figure}
+	\begin{multicols}{2}
+		\begin{description}
+			\item[bodyApproach] Align for kick.
+			\item[bodyChase] Ball sighted; run for ball and slow as distance decreases.
+			\item[bodyDribble] Dribble the ball.
+			\item[bodyGotoCenter] Return to the center of the field.
+			\item[bodyKick] Perform a standing kick.
+			\item[bodyObstacle] Obstacle detected.
+			\item[bodyObstacleAvoid] Sidestep or stop movement until the obstacle clears.
+			\item[bodyOrbit] Make fine adjustments to trajectory before kicking.
+			\item[bodyPosition] Main body state; most states will transition back here.
+			\item[bodySearch] Revolve and search for the ball.
+			\item[bodyStart] Initial state when the main code is started up. 
+			\item[bodyStop] Stops the robot completely.
+			\item[bodyWalkKick] Perform a kick while in motion.
+			\item[bodyUnpenalized] Commands the robot to stand back up and walk into the field after being unpenalized.
+		\end{description}
+	\end{multicols}
 
-		The specific head states used in our 2013 code are as follows:
-		\begin{multicols}{2}
-			\begin{description}
-				\item[headIdle] Initial state after main code is run; wait for game change.
-				\item[headKick] During \textit{bodyApproach}, keep the head tilted down towards the ball.
-				\item[headKickFollow] Follow the ball after a kick.
-				\item[headLookGoal] Look up during approach to find the attacking goal posts.
-				\item[headReady] Localize during \textit{BodyReadyMove} by finding lines.
-				\item[headReadyLookGoal] When in the initial position, look towards the attacking goal posts to localize.
-				\item[headScan] Look around for the ball.
-				\item[headStart] Initial state after the game state changes to 'Playing'.
-				\item[headSweep] Perform a general search, with a priority on finding goal posts.
-				\item[headTrack] Track the ball, moving or stationary.
-				\item[headTrackGoalie] Goalie-specific: Track the approaching ball.
-			\end{description}
-		\end{multicols}
+	One important note on BodyFSM is the approaching method. The simplest implementation is to make the robot walk straight to the ball and orbit around it until it faces the attacking goal (ready to make a shot). This method is robust but too slow in a game scenario, where the robots are supposed to approach the ball as fast as possible. In recent years, the curve approach method is introduced, as illustrated in \ref{fig:curveapproach}. Under this implementation, the robot keeps adjusting when approaching the ball. These adjustments are based upon the distance between the ball and the robot, as well as the projected kick direction. As the result, the robot walks in a faster and more natural curve when chasing the ball.
 
-  \subsection{Updates in State Machines for 2013}
-    For the Body State Machine, one important improvement is the approach method. Instead of the traditional direct approach method, this year we implemented the curvature approach method, as illustrated in \ref{fig:lineapproach}, which enables the robots to quickly reach and kick the ball. We built it through careful calculation of the robot's approaching path: basically speaking, the desired position of the robot in each cycle of the state machine is changing with the attacking angle. As the robot gradually rotates to face the goal, its destination moves closer to the ball, which results in a curved path.  
- 
-  	Obstacle detection code was improved in preparation for this year’s competition. Data read from the ultrasound sensors allows informed decisions as to the presence of an obstacle in the robot’s path to be made. Significant filtering of the input data, as well as relative as opposed to absolute measurements, allows us to generate a relatively reliable signal. From this information, it is possible to perform avoidance maneuvers if necessary.
-   
-		\begin{figure}[H]
-			\centering
-			\subfigure[During our regular approach, the Nao approaches the ball in a straight line until getting to a certain orbit distance, and then sidesteps and rotates into position.]{
-				\begin{tikzpicture}
-					\tikzstyle{ball} = [
-						circle,
-						shading=ball,
-						ball color=red,
-						minimum size=0.5cm
-					]
+	\begin{figure}[H]
+		\centering
+		\subfigure[In direct approach the robot spends too much time sidestepping around the ball.]{
+			\begin{tikzpicture}
+				\tikzstyle{ball} = [circle, shading=ball, ball color=red, minimum size=0.5cm]
+				\node (ball) [style=ball] at (2.0,5.0) {};
+				\node (botleft) at (0,0) {};
+				\node (botright) at (4,0) {};
+				\node (Nao0) at (2.4, 0) [isosceles triangle, fill=blue!40, rotate=94] {};
+				\node (Nao1) at (2.2, 2.3) [isosceles triangle, fill=blue!20, rotate=94] {};
+				\node (Nao2) at (2.1,4.2) [isosceles triangle, fill=blue!20, rotate=94] {};
+				\node (Nao3) at (2.8,5.0) [isosceles triangle, fill=blue!20, rotate=180] {};
+				\node (Nao4) at (2.0,5.7) [isosceles triangle, fill=blue!20, rotate=-90] {};
+				\draw [>->>] (Nao0) -- (2.05,4.6);
+				\draw [>->>] (2.05,4.6) .. controls (2.5,4.6) and (2.5,5.5) .. (2.0,5.3);
+			\end{tikzpicture}
+			\label{fig:linearapproach}
+		}
+		\quad
+		\subfigure[The curve approach allows the robot to perform its angle rotation while walking towards the ball.]{
+			\begin{tikzpicture}
+				\tikzstyle{ball} = [circle, shading=ball, ball color=red, minimum size=0.5cm]
+				\node (ball) [style=ball] at (2.0,5.0) {};
+				\node (botleft) at (0,0) {};
+				\node (botright) at (4,0) {};
+				\node (Nao0) at (2.4, 0) [isosceles triangle, fill=blue!40, rotate=94] {};
+				\node (Nao1) at (3.3, 1.8) [isosceles triangle, fill=blue!20, rotate=105] {};
+				\node (Nao2) at (3.3, 4.0) [isosceles triangle, fill=blue!20, rotate=140] {};
+				\node (Nao3) at (2.0,5.7) [isosceles triangle, fill=blue!20, rotate=-90] {};
+				\draw [>->>] (2.4,0.4) .. controls (4.0, 2.5) and (3.0, 5.5) .. (2.0,5.3);
+			\end{tikzpicture}
+			\label{fig:curveapproach}
+		}
+		\quad
+		\caption{Difference between our original and our improved approach.}
+	\end{figure}
 
-					\node (ball) [style=ball] at (2.0,5.0) {};
 
-					\node (botleft) at (0,0) {};
-					\node (botright) at (4,0) {};
+\subsubsection{BodyFSM for the Goalie: Sagar}
 
-					\node (Nao0) at (2.4, 0) [isosceles triangle, fill=blue!40, rotate=94] {};
-					\node (Nao1) at (2.2, 2.3) [isosceles triangle, fill=blue!20, rotate=94] {};
-					\node (Nao2) at (2.1,4.2) [isosceles triangle, fill=blue!20, rotate=94] {};
-					\node (Nao3) at (2.8,5.0) [isosceles triangle, fill=blue!20, rotate=180] {};
-					\node (Nao4) at (2.0,5.7) [isosceles triangle, fill=blue!20, rotate=-90] {};
-					
-					\draw [>->>] (Nao0) -- (2.05,4.6);
-					\draw [>->>] (2.05,4.6) .. controls (2.5,4.6) and (2.5,5.5) .. (2.0,5.3);
-					
-				\end{tikzpicture}
+\subsection{The Head Finite State Machine}
+	The Head Finite State Machine (HeadFSM) controls the robot head movements. During the game, the robot has to move its head (changes yaw and pitch) efficiently to better and faster locate objects on field. The head movements are usually independent from the body movement, and therefore a separate state machine is designed. 
 
-				\label{fig:linearapproach}
-				}
-			\quad
-			\subfigure[The new curve approach that we implemented allows the Nao to perform its angle rotation during the approach, resulting in an overall faster motion to line up for kicks.]{
-				\begin{tikzpicture}
-
-					\tikzstyle{ball} = [
-						circle,
-						shading=ball,
-						ball color=red,
-						minimum size=0.5cm
-					]
-
-					\node (ball) [style=ball] at (2.0,5.0) {};
-
-					\node (botleft) at (0,0) {};
-					\node (botright) at (4,0) {};
-
-					\node (Nao0) at (2.4, 0) [isosceles triangle, fill=blue!40, rotate=94] {};
-					\node (Nao1) at (3.3, 1.8) [isosceles triangle, fill=blue!20, rotate=105] {};
-					\node (Nao2) at (3.3, 4.0) [isosceles triangle, fill=blue!20, rotate=140] {};
-					\node (Nao3) at (2.0,5.7) [isosceles triangle, fill=blue!20, rotate=-90] {};
-					
-					\draw [>->>] (2.4,0.4) .. controls (4.0, 2.5) and (3.0, 5.5) .. (2.0,5.3);
-					
-				\end{tikzpicture}
-
-				\label{fig:curveapproach}
-				}
-			\quad
-
-			\caption{Difference between our original and our improved approach.}
-		\end{figure}
-
-  \subsection{Team Play}
-		To make efficient use of the field, we have divided our team of five robots into 4 separate and distinct roles. These various roles have differing starting positions, and inhabit different parts of the field after kickoff. Our roles are as follows:
-
-		\begin{center}
-			\begin{tabular}{ l c p{7cm} } %p{} takes care of text wrapping by defining a fixed column width.
-				Goalie & 1 & Stays in and around the defensive goal to clear the ball when it comes close. \\
-				Attacker & 2 & Goes directly towards the ball and kicks. \\
-				Supporter & 3 & Follows the attacking robot up-field, but stays at a respectable distance away---usually about midfield. \\
-				Defender & 4 & The defending robot positions itself between the ball and defensive goal area. \\
-				Defender Two & 5 & Performs double duty with the first defender, but has a different initial position. \\
-			\end{tabular}
-		\end{center}
-
-		Our primary strategy is to constantly keep the ball moving down-field. To encourage this, the four general players (non-goalies) are constantly communicating over Wi-Fi, sharing their global position, relative distances to the ball, and current roles. Our code works in such a way that the role of Attacker changes often during a game, based on ETA's to the game ball. 
-
-		\begin{figure}[H]
-			\centering
-
-			\tikzstyle{ball} = [
-				circle,
-				shading=ball,
-				ball color=red,
-				minimum size=0.5cm
-			]
-			
-			\subfigure[The ball is closest to Nao 2, and so it is currently the Attacker. Nao 5 sights the ball, but because its distance is second farthest away, it becomes the Supporter.]{
-				\begin{tikzpicture}
-					\node (S) at (0, 0) [label=above:Supporter, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=25] {\rotatebox{-25}{3}};
-					\node (A) at +(40: 4.6) [label=left:Attacker, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=-30] {\rotatebox{30}{2}};
-					\node (E) at +(25: 7.0) [isosceles triangle, fill=red!30, text width=0.5cm, align=center, rotate=-150] {\rotatebox{150}{E}};
-
-					\node (ball) [style=ball] at (4.9,2.2) {};
-
-					\draw[->] (A) -- (ball);
-					\draw[dotted, >->>] (S) -- (ball);
-					\draw[dashed, o-)] (E) -- (ball);
-
-				\end{tikzpicture}
-				\label{fig:teamplay1}
-				}
-			\quad
-			\subfigure[After the ball changes position and becomes closest to 3, it now becomes the Attacker. The Nao that was formerly an attacker, now being second furthest away, assigns itself the role of Supporter.]{
-				\begin{tikzpicture}
-					\node (S) at (0, 0) [label=above:Attacker, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=5] {\rotatebox{-5}{3}};
-					\node (A) at +(40: 4.6) [label=below:Supporter, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=-118] {\rotatebox{118}{2}};
-					\node (E) at +(25: 6.0) [isosceles triangle, fill=red!30, text width=0.5cm, align=center, rotate=-148] {\rotatebox{148}{E}};
-
-					\node (ball) [style=ball] at (2.0,0.2) {};
-
-					\draw[->] (S) -- (ball);
-					\draw[dotted, >->>] (A) -- (ball);
-					\draw[dashed, o-)] (E) -- (ball);
-
-				\end{tikzpicture}
-
-			\label{fig:teamplay2}
-				}
-			\quad
-
-			\caption{Illustration of how roles change between team members.}
-		\end{figure}
+	Figure \ref{fig:headfsm} shows the HeadFSM (same for goalie and field players), followed by brief descriptions of the states. 
 		
-		Take for example, this situation. Following kickoff, Nao \#2, initially assigned as the Attacker, gets the ball into the opponent half. An opponent defender steals the ball away, and with a powerful kick, sends it back into our half. If Defender Two (Nao \#5) finds the ball stopped closest to him, he will inform the team that he is switching into the Attacker role. The other three general players will then check how far they are to the ball, and assign themselves roles in order of ascending distance to the ball. The next closest robot, regardless of number and initial role, would become the new Supporter, while the two furthest away would become Defenders One and Two.
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=.8\textwidth]{figures/HeadFSM.eps}
+		\label{fig:headfsm}
+		\caption{Head State Machine\\Left : during the game / Right: while waiting for game start }
+		\label{fig:headfsm}
+	\end{figure}
 
-    In this way, the team can reach and move the ball much quicker and with more efficiency by behaving as a dynamic unit.
+	\begin{multicols}{2}
+		\begin{description}
+			\item[headKick] During \textit{bodyApproach}, keep the head tilted down towards the ball.
+			\item[headKickFollow] Follow the ball after a kick.
+			\item[headLookGoal] Look up during approach to find the attacking goal posts.
+			\item[headReady] Look for ball while waiting for game start
+			\item[headReadyLookGoal] Look for goal while waiting for game start
+			\item[headScan] Look around for the ball.
+			\item[headStart] Initial state after the game state changes to 'Playing'.
+			\item[headSweep] Perform a general search, with a priority on finding goal posts.
+			\item[headTrack] Track the ball, moving or stationary.
+		\end{description}
+	\end{multicols}
 
+\subsection{Team Play}
+	Robust single robot behavior is not sufficient to have good performance during robot soccer games. All players on the field have to coordinate and function as a team. The team play module regulates team behaviors so robots can make efficient use of the space on field. The infrastructural base of team play is the WiFi-based communication between robots, where all players share basic cognition information (such as their own locations, the perceived ball locations, etc.) The essence of team play is a role switching mechanism which helps robots to stay at different locations on the field, contributing to both attacking and defending. There are five defined roles: 
+
+	\begin{center}
+		\begin{tabular}{ l c p{7cm} } %p{} takes care of text wrapping by defining a fixed column width.
+			Goalie & 1 & Stays in and around the defensive goal to clear the ball when it comes close. \\
+			Attacker & 2 & Goes directly towards the ball and kicks. \\
+			Supporter & 3 & Follows the attacking robot up-field, but stays at a respectable distance away---usually about midfield. \\
+			Defender & 4 & The defending robot positions itself between the ball and defensive goal area. \\					Defender Two & 5 & Performs double duty with the first defender, but has a different initial position. \\
+		\end{tabular}
+	\end{center}
+
+	\begin{figure}[H]
+		\centering
+		\tikzstyle{ball} = [circle, shading=ball,ball color=red,minimum size=0.5cm]
+		\subfigure[The ball is closest to Robot 2, the currently Attacker. Robot 3 sights the ball and is assigned Supporter.]{
+		\begin{tikzpicture}
+			\node (S) at (0, 0) [label=above:Supporter, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=25] {\rotatebox{-25}{3}};
+			\node (A) at +(40: 4.6) [label=left:Attacker, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=-30] {\rotatebox{30}{2}};
+			\node (E) at +(25: 7.0) [isosceles triangle, fill=red!30, text width=0.5cm, align=center, rotate=-150] {\rotatebox{150}{E}};
+			\node (ball) [style=ball] at (4.9,2.2) {};
+			\draw[->] (A) -- (ball);
+			\draw[dotted, >->>] (S) -- (ball);
+			\draw[dashed, o-)] (E) -- (ball);
+		\end{tikzpicture}
+		\label{fig:teamplay1}
+		}
+		\quad
+		\subfigure[The opponent robot kicks the ball and the ball moves toward Robot 3, which becomes the new Attacker. The former Attacker Robot 2 is assigned Supporter due to further distance from the ball.]{
+		\begin{tikzpicture}
+			\node (S) at (0, 0) [label=above:Attacker, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=5] {\rotatebox{-5}{3}};
+			\node (A) at +(40: 4.6) [label=below:Supporter, isosceles triangle, fill=blue!30, text width=0.5cm, align=center, rotate=-118] {\rotatebox{118}{2}};
+			\node (E) at +(25: 6.0) [isosceles triangle, fill=red!30, text width=0.5cm, align=center, rotate=-148] {\rotatebox{148}{E}};
+			\node (ball) [style=ball] at (2.0,0.2) {};
+			\draw[->] (S) -- (ball);
+			\draw[dotted, >->>] (A) -- (ball);
+			\draw[dashed, o-)] (E) -- (ball);
+		\end{tikzpicture}
+		\label{fig:teamplay2}
+		}
+		\quad
+		\caption{Simple Example of Role Switching.}
+	\end{figure}
 	
+	The primary strategy is to keep the ball moving down-field. To encourage this, the four general players (non-goalies) are constantly switching their roles. According to the shared cognition information, each robot calculates its estimated time of approaching (ETA). ETA is a function of numeral factors, including if the robot is fallen, if the robot sees the ball, the distance between the robot and the ball, walking speed, etc. The robot with the smallest ETA will be assigned the attacker, and other robots will be assigned defender or supporter based on their locations on field. Figure \ref{fig:teamplay1} and \ref{fig:teamplay2} is a illustration of dynamic role switching during the game.	
+
 
 \section{Summary}
 	While the UPennalizers broke their annual tradition of making it to the quarterfinal matches every year, the team has continued to keep pace with the rest of the league. With a new batch of undergraduates ready to pass on their knowledge to new team members in the fall, the UPennalizers' future looks as bright as ever.
-
-	Our 2013 demo code has been released on our website under the GNU public license, and we hope that it will be of use to future teams.
 
 \end{document}
 

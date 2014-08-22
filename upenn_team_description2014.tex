@@ -85,7 +85,7 @@
 
 
 \section{Motion}
-	Motion is controlled by a dynamic walk module combined with predetermined scripted motions. One main development has been a bipedal walk engine that allows for fast, omni-directional motions. IMU feedback is used to modulate the commanded joint angles and phase of the gait cycle to provide for further stability during locomotion. In this way, minor disturbances such as carpet imperfections and bumping into obstacles do not cause the robot to fall over. The robot has several powerful kick motions using pre-defined keyframes and a ZMP walk-kick for quicker reaction. We are also using keyframes for our get-up motions under different battery levels.
+	Motion is controlled by a dynamic walk module combined with predetermined scripted motions. One main development has been a bipedal walk engine that allows for fast, omni-directional motions. IMU feedback is used to modulate the commanded joint angles and phase of the gait cycle to provide for further stability during locomotion. In this way, minor disturbances such as carpet imperfections and bumping into obstacles do not cause the robot to fall over. The robot has several powerful kick motions using pre-defined keyframes and a ZMP walk-kick for quicker reaction. Keyframes are also used for all of the get-up motions under different battery levels.
 
 \subsection{Walk}
 
@@ -155,19 +155,19 @@ $a_i,b_i$ can then be calculated given the boundary condition $x_i(0)=T_i$ and $
 		\includegraphics[width=1\textwidth]{figures/ZMP.eps}
 		\caption{An example for a reference ZMP trajectory and corresponding torso trajectory.}
 	\end{figure}
-After we get the body pose and feet poses, the inverse kinematics module is used to calculate angles for each joints so that the robot can actually walk as we desired.
+Given body pose and feet poses, an inverse kinematics module is used to calculate angles for each joints so that the robot can actually walk as desired.
 
 \subsubsection{Feedback controller}
-	The feedback controller takes in the sensor information from the robot during the walk and tries to stabilize it by controlling the ankle joints, knee joints and hip joints. Right now we are using the roll and pitch angles as inputs for several simple PD controllers. Knee and hip joints are used to overcome pitch errors while ankle joints are used for roll error. If the pitch angle or roll angle is higher than a threshold, the walk motion will be stopped. This can be caused by other robot pushing our robot during a game.   
+	The feedback controller takes in the sensor information from the robot during the walk and tries to stabilize it by controlling the ankle joints, knee joints and hip joints. Roll and pitch angles are used as inputs for several simple PD controllers. Knee and hip joints are used to overcome pitch errors while ankle joints are used for roll error. If the pitch angle or roll angle is higher than a threshold, the walk motion will be stopped. This can be caused by other robot pushing our robot during a game.   
   
 \subsection{Kicks}
-	  Our kicks this year are a combination of scripted keyframes and ZMP-based kicks. Of our three kicks -- standing, walk, and side -- only the walk-kick utilizes the new ZMP engine. The old-fashioned style kicks are created by specifying motor positions and timings, and must be carefully tuned by hand in order to ensure balance, stability, and power. The new kicks are inherited from our merge with Team DARwIn. Similar to how the walk engine calculates joint positions in response to motion requests of the COM and ZMP, our newer kick calculates the way that the robot needs to balance in order to perform faster and more powerful kicks.  
+	  Our kicks this year are a combination of scripted keyframes and ZMP-based kicks. Of our three kicks -- standing, walk, and side -- only the walk-kick utilizes the new ZMP engine. The old-fashioned style kicks are created by specifying motor positions and timings, and must be carefully tuned by hand in order to ensure balance, stability, and power. The new kicks are inherited from our merge with Team DARwIn. Similar to how the walk engine calculates joint positions in response to motion requests of the COM and ZMP, the newer kick calculates the way that the robot needs to balance in order to perform faster and more powerful kicks.  
 \begin{comment}
 	  While we utilized a mix of a keyframed standing and keyframed walk-kick during the US Open to great success, after transitioning to the ZMP walk-kick, we used this newer kick solely during our matches in Eindhoven. This allowed us to have greater control over the ball, and react quicker than opponent robots which would approach a ball and take excessive time during their keyframe motions to do a kick.
 \end{comment}
   
 \subsection{Get up}
-	Our get up motions are all defined by several keyframe files. A keyframe file consists of a series of frames, snapshots of the 22 motor positions along with a timing by which those positions must be reached from the previous frame. Though the motors natively read and write radians to their encoder, we use degrees and convert them later for better readability.
+	Get up motions are all defined by several keyframe files. A keyframe file consists of a series of frames, snapshots of the 22 motor positions along with a timing by which those positions must be reached from the previous frame. Though the motors natively read and write radians to their encoder, we use degrees and convert them later for better readability.
 	
 	\begin{lstlisting}
   	  	angles = vector.new({
@@ -209,7 +209,7 @@ After we get the body pose and feet poses, the inverse kinematics module is used
 		\end{enumerate}
 	\end{multicols}
 
-	These keyframes are hand-tuned based upon experimentation. To prolong the life of our robots, we do most of the heavy keyframe testing in Webots and then port it to the robots and perform final checks to verify full functionality. Some keyframes can make the robot get up is 6 seconds, which is much faster than some other get up motions. However, the get up motion performance is highly depends on the battery level and the hardware condition. During our test, many robots cannot get up with fast motions if their battery levels are lower than 8, or if they have a broken joint. To avoid keep picking up our robots during a real game because they cannot get up, we set each robot to have two get up motions. The default get up motion is set to be the fast one. If the battery level is lower than a threshold, or the robot have failed to get up once, it will switch to the slow get up motion. This change helped us a lot in Joao Pessoa. 
+	These keyframes are hand-tuned based upon experimentation. To prolong the life of our robots, we do most of the heavy keyframe testing in Webots and then port it to the robots and perform final checks to verify full functionality. Some keyframes can make the robot get up is 6 seconds, which is much faster than some other get up motions. However, the get up motion performance is highly depending on the battery level and the hardware condition. During the test, many robots cannot get up with fast motions if their battery levels are lower than 8, or if they have a broken joint. To avoid keep picking up our robots during a real game because they cannot get up, we set each robot to have two get up motions. The default get up motion is set to be the fast one. If the battery level is lower than a threshold, or the robot have failed to get up once, it will switch to the slow get up motion. This change helped us a lot in Joao Pessoa. 
 
 
 

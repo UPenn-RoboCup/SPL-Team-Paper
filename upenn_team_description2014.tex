@@ -286,8 +286,6 @@ Given body pose and feet poses, an inverse kinematics module is used to calculat
 \subsubsection{Changes in Goalpost Detection}
 	In order to improve last year's method of determining the distance between the goalpost and the nao robot (using a goalpost distance factor that requires calibration on different fields), different formulas were used to try to scale the goalpost distance factor based on the estimated distance between the robot and goalpost.  After much trial and error, a simple piecewise function proved very reliable with the goalpost distance factor taking a smaller value when nearby the goalposts and a larger value when farther away.  
 
-\subsubsection{Changes in Line and Spot Detection} 
-	
 
 \subsubsection{Changes in Ball Detection}
 	Last year, differentiating between actual balls and pink robot jerseys proved difficult. This issue should have been handled by a height check and min/max pixel checks, but false balls still passed these tests. In order to address this problem, robot pink was added to the color map so that any potential balls with too much robot pink would fail. After experimenting with fillrate and a simple max threshold for the amount of pink pixels allowed, it was determined that the max threshold test worked best.  		

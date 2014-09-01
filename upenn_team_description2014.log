@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  22 AUG 2014 12:58
+This is pdfTeX, Version 3.14159265-2.6-1.40.15 (TeX Live 2014) (preloaded format=pdflatex 2014.5.25)  1 SEP 2014 11:41
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -579,7 +579,14 @@ Package: ifthen 2001/05/26 v1.1c Standard LaTeX ifthen package (DPC)
 \rot@float@box=\box87
 \rot@mess@toks=\toks32
 )
-No file upenn_team_description2014.aux.
+(./upenn_team_description2014.aux
+
+LaTeX Warning: Label `fig:bodyfsm' multiply defined.
+
+
+LaTeX Warning: Label `fig:headfsm' multiply defined.
+
+)
 \openout1 = `upenn_team_description2014.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 34.
@@ -594,7 +601,7 @@ LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 34.
 LaTeX Font Info:    ... okay on input line 34.
 LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 34.
 LaTeX Font Info:    ... okay on input line 34.
-(/usr/local/texlive/2014/texmf-dist/tex/context/base/supp-pdf.mkii
+ (/usr/local/texlive/2014/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count134
 \scratchdimen=\dimen174
@@ -670,9 +677,6 @@ l-va-nia's Robocup
 [1
 
 {/usr/local/texlive/2014/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-
-LaTeX Warning: Reference `fig:softarch' on page 2 undefined on input line 55.
-
 Package epstopdf Info: Source file: <figures/SoftArchOverview.eps>
 (epstopdf)                    date: 2014-08-14 11:50:55
 (epstopdf)                    size: 4150833 bytes
@@ -747,11 +751,8 @@ File: figures/ZMP-eps-converted-to.pdf Graphic file (type pdf)
 Package pdftex.def Info: figures/ZMP-eps-converted-to.pdf used on input line 15
 6.
 (pdftex.def)             Requested size: 345.0pt x 258.74924pt.
- [7 <./figures/ZMP-eps-converted-to.pdf>] [8]
-
-LaTeX Warning: Reference `fig:cog' on page 9 undefined on input line 218.
-
-<figures/CogStructure.png, id=64, 560.0925pt x 469.755pt>
+ [7 <./figures/ZMP-eps-converted-to.pdf>] [8] <figures/CogStructure.png, id=64,
+ 560.0925pt x 469.755pt>
 File: figures/CogStructure.png Graphic file (type png)
 
 <use figures/CogStructure.png>
@@ -767,13 +768,6 @@ File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 235.
  [10 <./figures/CogStructure.png>]
-
-LaTeX Warning: Reference `fig:unprocessed' on page 11 undefined on input line 2
-44.
-
-
-LaTeX Warning: Reference `fig:labelb' on page 11 undefined on input line 244.
-
 Package epstopdf Info: Source file: <figures/Unprocessed.eps>
 (epstopdf)                    date: 2014-08-14 11:50:55
 (epstopdf)                    size: 738076 bytes
@@ -784,6 +778,7 @@ Package epstopdf Info: Source file: <figures/Unprocessed.eps>
 nverted-to.pdf figures/Unprocessed.eps>
 (epstopdf)             \includegraphics on input line 251.
 Package epstopdf Info: Output file is already uptodate.
+
 <figures/Unprocessed-eps-converted-to.pdf, id=71, 187.70125pt x 148.555pt>
 File: figures/Unprocessed-eps-converted-to.pdf Graphic file (type pdf)
 
@@ -829,9 +824,6 @@ Package pdftex.def Info: figures/LabelB-eps-converted-to.pdf used on input line
 (pdftex.def)             Requested size: 137.9979pt x 108.88019pt.
  [11 <./figures/Unprocessed-eps-converted-to.pdf> <./figures/Processed-eps-conv
 erted-to.pdf> <./figures/LabelB-eps-converted-to.pdf>]
-
-LaTeX Warning: Reference `fig:Hough' on page 12 undefined on input line 275.
-
 Package epstopdf Info: Source file: <figures/Hough.eps>
 (epstopdf)                    date: 2014-08-14 11:50:55
 (epstopdf)                    size: 570032 bytes
@@ -842,6 +834,7 @@ Package epstopdf Info: Source file: <figures/Hough.eps>
 d-to.pdf figures/Hough.eps>
 (epstopdf)             \includegraphics on input line 279.
 Package epstopdf Info: Output file is already uptodate.
+
 <figures/Hough-eps-converted-to.pdf, id=87, 441.65pt x 172.645pt>
 File: figures/Hough-eps-converted-to.pdf Graphic file (type pdf)
 
@@ -869,13 +862,6 @@ Package pdftex.def Info: figures/RaoBlackwell-eps-converted-to.pdf used on inpu
 t line 308.
 (pdftex.def)             Requested size: 207.0021pt x 164.49059pt.
  [13]
-
-LaTeX Warning: Reference `fig:raoblack' on page 14 undefined on input line 313.
-
-
-
-LaTeX Warning: Reference `fig:Init' on page 14 undefined on input line 316.
-
 <figures/InitParticles.png, id=99, 418.56375pt x 294.09875pt>
 File: figures/InitParticles.png Graphic file (type png)
 
@@ -883,10 +869,6 @@ File: figures/InitParticles.png Graphic file (type png)
 Package pdftex.def Info: figures/InitParticles.png used on input line 320.
 (pdftex.def)             Requested size: 207.0021pt x 145.44695pt.
  [14 <./figures/RaoBlackwell-eps-converted-to.pdf>]
-
-LaTeX Warning: Reference `fig:odometry' on page 15 undefined on input line 326.
-
-
 Package epstopdf Info: Source file: <figures/Odometry.eps>
 (epstopdf)                    date: 2014-08-14 11:50:55
 (epstopdf)                    size: 1882778 bytes
@@ -897,7 +879,7 @@ Package epstopdf Info: Source file: <figures/Odometry.eps>
 rted-to.pdf figures/Odometry.eps>
 (epstopdf)             \includegraphics on input line 330.
 Package epstopdf Info: Output file is already uptodate.
-<figures/Odometry-eps-converted-to.pdf, id=111, 717.68124pt x 433.62pt>
+ <figures/Odometry-eps-converted-to.pdf, id=111, 717.68124pt x 433.62pt>
 File: figures/Odometry-eps-converted-to.pdf Graphic file (type pdf)
 
 <use figures/Odometry-eps-converted-to.pdf>
@@ -905,10 +887,6 @@ Package pdftex.def Info: figures/Odometry-eps-converted-to.pdf used on input li
 ne 330.
 (pdftex.def)             Requested size: 207.0021pt x 125.06508pt.
  [15 <./figures/InitParticles.png> <./figures/Odometry-eps-converted-to.pdf>]
-
-LaTeX Warning: Reference `fig:particlesafter' on page 16 undefined on input lin
-e 337.
-
 Package epstopdf Info: Source file: <figures/FocusedParticles.eps>
 (epstopdf)                    date: 2014-08-14 11:50:55
 (epstopdf)                    size: 748224 bytes
@@ -929,25 +907,13 @@ Package pdftex.def Info: figures/FocusedParticles-eps-converted-to.pdf used on
 input line 341.
 (pdftex.def)             Requested size: 207.0021pt x 145.44695pt.
  [16 <./figures/FocusedParticles-eps-converted-to.pdf>]
-
-LaTeX Warning: Reference `fig:monitor' on page 17 undefined on input line 365.
-
 <figures/Monitor.png, id=125, 1591.9475pt x 873.2625pt>
 File: figures/Monitor.png Graphic file (type png)
 
 <use figures/Monitor.png>
 Package pdftex.def Info: figures/Monitor.png used on input line 369.
 (pdftex.def)             Requested size: 345.0pt x 189.24016pt.
-
-
-LaTeX Warning: Reference `fig:topparams' on page 17 undefined on input line 378
-.
-
-
-LaTeX Warning: Reference `fig:bottomparams' on page 17 undefined on input line 
-378.
-
-[17 <./figures/Monitor.png>]
+ [17 <./figures/Monitor.png>]
 <figures/TopCamParams.png, id=129, 201.3924pt x 238.491pt>
 File: figures/TopCamParams.png Graphic file (type png)
 
@@ -962,10 +928,6 @@ File: figures/BottomCamParams.png Graphic file (type png)
 Package pdftex.def Info: figures/BottomCamParams.png used on input line 390.
 (pdftex.def)             Requested size: 103.50105pt x 122.98701pt.
 
-
-LaTeX Warning: Reference `fig:colortable' on page 18 undefined on input line 39
-6.
-
 <figures/ColorSelectionTool.png, id=132, 461.0826pt x 305.4612pt>
 File: figures/ColorSelectionTool.png Graphic file (type png)
 
@@ -975,22 +937,17 @@ Package pdftex.def Info: figures/ColorSelectionTool.png used on input line 400.
 (pdftex.def)             Requested size: 207.0021pt x 137.13466pt.
  [18 <./figures/TopCamParams.png> <./figures/BottomCamParams.png> <./figures/Co
 lorSelectionTool.png>]
-
-LaTeX Warning: Reference `fig:bodyfsm' on page 19 undefined on input line 416.
-
 Package epstopdf Info: Source file: <figures/NewBodyFSM.eps>
 (epstopdf)                    date: 2014-08-22 12:57:48
 (epstopdf)                    size: 63544 bytes
 (epstopdf)             Output file: <figures/NewBodyFSM-eps-converted-to.pdf>
+(epstopdf)                    date: 2014-08-22 12:58:29
+(epstopdf)                    size: 102702 bytes
 (epstopdf)             Command: <repstopdf --outfile=figures/NewBodyFSM-eps-con
 verted-to.pdf figures/NewBodyFSM.eps>
 (epstopdf)             \includegraphics on input line 420.
-runsystem(repstopdf --outfile=figures/NewBodyFSM-eps-converted-to.pdf figures/N
-ewBodyFSM.eps)...executed safely (allowed).
+Package epstopdf Info: Output file is already uptodate.
 
-Package epstopdf Info: Result file: <figures/NewBodyFSM-eps-converted-to.pdf>
-(epstopdf)                    date: 2014-08-22 12:58:29
-(epstopdf)                    size: 102702 bytes.
 <figures/NewBodyFSM-eps-converted-to.pdf, id=139, 1176.395pt x 722.7pt>
 File: figures/NewBodyFSM-eps-converted-to.pdf Graphic file (type pdf)
 
@@ -999,17 +956,12 @@ Package pdftex.def Info: figures/NewBodyFSM-eps-converted-to.pdf used on input
 line 420.
 (pdftex.def)             Requested size: 345.0pt x 211.93752pt.
  [19]
-Underfull \hbox (badness 10000) in paragraph at lines 433--434
-[]\OT1/cmr/m/n/10 Sidestep or
- []
-
-
 Underfull \hbox (badness 10000) in paragraph at lines 435--436
 []\OT1/cmr/m/n/10 Main body state;
  []
 
 
-Underfull \hbox (badness 8132) in paragraph at lines 438--439
+Underfull \hbox (badness 8132) in paragraph at lines 438--440
 []\OT1/cmr/m/n/10 Stops the robot com-
  []
 
@@ -1018,13 +970,44 @@ Underfull \hbox (badness 10000) in paragraph at lines 440--441
 []\OT1/cmr/m/n/10 Commands the
  []
 
-
-LaTeX Warning: Reference `fig:curveapproach' on page 20 undefined on input line
- 444.
-
 [20 <./figures/NewBodyFSM-eps-converted-to.pdf>]
+Overfull \hbox (18.71921pt too wide) in paragraph at lines 485--486
+\OT1/cmtt/m/n/10 ball if it is near to own goal post $\OMS/cmsy/m/n/10 !$ \OT1/
+cmtt/m/n/10 Kick it away from the gaol post\OT1/cmr/m/n/10 . 
+ []
 
-LaTeX Warning: Reference `fig:headfsm' on page 21 undefined on input line 489.
+Package epstopdf Info: Source file: <figures/Goalie-BodyFSM.eps>
+(epstopdf)                    date: 2014-09-01 11:21:18
+(epstopdf)                    size: 44828 bytes
+(epstopdf)             Output file: <figures/Goalie-BodyFSM-eps-converted-to.pd
+f>
+(epstopdf)                    date: 2014-09-01 11:24:47
+(epstopdf)                    size: 35374 bytes
+(epstopdf)             Command: <repstopdf --outfile=figures/Goalie-BodyFSM-eps
+-converted-to.pdf figures/Goalie-BodyFSM.eps>
+(epstopdf)             \includegraphics on input line 489.
+Package epstopdf Info: Output file is already uptodate.
+<figures/Goalie-BodyFSM-eps-converted-to.pdf, id=153, 746.79pt x 439.6425pt>
+File: figures/Goalie-BodyFSM-eps-converted-to.pdf Graphic file (type pdf)
+
+<use figures/Goalie-BodyFSM-eps-converted-to.pdf>
+Package pdftex.def Info: figures/Goalie-BodyFSM-eps-converted-to.pdf used on in
+put line 489.
+(pdftex.def)             Requested size: 345.0pt x 203.10338pt.
+ [21 <./figures/Goalie-BodyFSM-eps-converted-to.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 505--506
+[]\OT1/cmr/m/n/10 Main body
+ []
+
+
+Underfull \hbox (badness 8132) in paragraph at lines 508--509
+[]\OT1/cmr/m/n/10 Stops the robot com-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 510--511
+[]\OT1/cmr/m/n/10 Commands the
+ []
 
 Package epstopdf Info: Source file: <figures/HeadFSM.eps>
 (epstopdf)                    date: 2014-08-14 11:50:55
@@ -1034,52 +1017,41 @@ Package epstopdf Info: Source file: <figures/HeadFSM.eps>
 (epstopdf)                    size: 45094 bytes
 (epstopdf)             Command: <repstopdf --outfile=figures/HeadFSM-eps-conver
 ted-to.pdf figures/HeadFSM.eps>
-(epstopdf)             \includegraphics on input line 493.
+(epstopdf)             \includegraphics on input line 523.
 Package epstopdf Info: Output file is already uptodate.
-<figures/HeadFSM-eps-converted-to.pdf, id=153, 762.85pt x 587.19376pt>
+<figures/HeadFSM-eps-converted-to.pdf, id=160, 762.85pt x 587.19376pt>
 File: figures/HeadFSM-eps-converted-to.pdf Graphic file (type pdf)
 
 <use figures/HeadFSM-eps-converted-to.pdf>
 Package pdftex.def Info: figures/HeadFSM-eps-converted-to.pdf used on input lin
-e 493.
+e 523.
 (pdftex.def)             Requested size: 276.00105pt x 212.44685pt.
- [21]
-Underfull \hbox (badness 10000) in paragraph at lines 501--502
+ [22]
+Underfull \hbox (badness 10000) in paragraph at lines 531--532
 []\OT1/cmr/m/n/10 During \OT1/cmr/m/it/10 bodyAp-proach\OT1/cmr/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 7888) in paragraph at lines 507--508
+Underfull \hbox (badness 7888) in paragraph at lines 537--538
 []\OT1/cmr/m/n/10 Initial state af-ter the
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 508--509
+Underfull \hbox (badness 10000) in paragraph at lines 538--539
 []\OT1/cmr/m/n/10 Perform a gen-eral
  []
 
-[22 <./figures/HeadFSM-eps-converted-to.pdf>]
+[23 <./figures/HeadFSM-eps-converted-to.pdf>] [24] [25]
+(./upenn_team_description2014.aux)
 
-LaTeX Warning: Reference `fig:teamplay1' on page 23 undefined on input line 557
-.
-
-
-LaTeX Warning: Reference `fig:teamplay2' on page 23 undefined on input line 557
-.
-
-[23] [24] (./upenn_team_description2014.aux)
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 17029 strings out of 493117
- 356666 string characters out of 6135433
- 428475 words of memory out of 5000000
- 20172 multiletter control sequences out of 15000+600000
+ 17036 strings out of 493117
+ 356937 string characters out of 6135433
+ 428831 words of memory out of 5000000
+ 20176 multiletter control sequences out of 15000+600000
  7224 words of font info for 26 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  55i,10n,72p,1126b,1036s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1102,10 +1074,10 @@ xmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2014/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2014/texmf
 -dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/texlive/2014/texmf-
 dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on upenn_team_description2014.pdf (24 pages, 2145743 bytes).
+Output written on upenn_team_description2014.pdf (25 pages, 2180100 bytes).
 PDF statistics:
- 230 PDF objects out of 1000 (max. 8388607)
- 149 compressed objects within 2 object streams
+ 238 PDF objects out of 1000 (max. 8388607)
+ 154 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 114 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 119 words of extra memory for PDF output out of 10000 (max. 10000000)
 

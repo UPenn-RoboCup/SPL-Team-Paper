@@ -425,18 +425,18 @@ A vision simulator is designed to open and run image processing on these log fil
 	\begin{multicols}{2}
 		\begin{description}
 			\item[bodyApproach] Align for kick.
-			\item[bodyChase] Ball sighted; run for ball and slow as distance decreases.
-			\item[bodyDribble] Dribble the ball.
+			%\item[bodyChase] Ball sighted; run for ball and slow as distance decreases.
+			%\item[bodyDribble] Dribble the ball.
 			\item[bodyGotoCenter] Return to the center of the field.
-			\item[bodyKick] Perform a standing kick.
-			\item[bodyObstacle] Obstacle detected.
-			\item[bodyObstacleAvoid] Sidestep or stop movement until the obstacle clears.
+			\item[bodyKick] Perform different type of kicks.
+			%\item[bodyObstacle] Obstacle detected.
+			%\item[bodyObstacleAvoid] Sidestep or stop movement until the obstacle clears.
 			\item[bodyOrbit] Make fine adjustments to trajectory before kicking.
 			\item[bodyPosition] Main body state; most states will transition back here.
 			\item[bodySearch] Revolve and search for the ball.
 			\item[bodyStart] Initial state when the main code is started up. 
 			\item[bodyStop] Stops the robot completely.
-			\item[bodyWalkKick] Perform a kick while in motion.
+			%\item[bodyWalkKick] Perform a kick while in motion.
 			\item[bodyUnpenalized] Commands the robot to stand back up and walk into the field after being unpenalized.
 		\end{description}
 	\end{multicols}
@@ -481,7 +481,37 @@ A vision simulator is designed to open and run image processing on these log fil
 	\end{figure}
 
 
-\subsubsection{BodyFSM for the Goalie: Sagar}
+\subsubsection{BodyFSM for the Goalie}
+Figure \ref{fig:bodyfsm} shows the transitions of states for a golaie. It is followed by brief descriptions of the states. The basic routine is: \texttt{Track the ball} $\to$ \texttt{Approach the ball if it is near to own goal post} $\to$ \texttt{Kick it away from the gaol post}.
+		
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=\textwidth]{figures/Goalie-BodyFSM.eps}
+		\caption{Body State Machine for a goalie.}
+		\label{fig:bodyfsm}
+	\end{figure}
+		
+	\begin{multicols}{2}
+		\begin{description}
+			\item[bodyStart] Initial state when the main code is started up. 
+			\item[bodyAnticipate] Predict the near-future position of Goalie.
+			\item[bodyApproach] Align for kick.
+			%\item[bodyChase] Ball sighted; run for ball and slow as distance decreases.
+			\item[bodyGotoCenter] Return to the center of the field.
+			\item[bodyKick] Perform stationary kick.
+			\item[bodyWalkKick] Perform a kick while in motion.
+			%\item[bodyObstacle] Obstacle detected.
+			%\item[bodyObstacleAvoid] Sidestep or stop movement until the obstacle clears.
+			\item[bodyPositionGoalie] Main body state; most states will transition back here.
+			\item[bodySearch] Revolve and search for the ball.
+			
+			\item[bodyStop] Stops the robot completely.
+			
+			\item[bodyUnpenalized] Commands the robot to stand back up and walk into the field after being unpenalized.
+		\end{description}
+	\end{multicols}
+
+	We made some changes recently in goalie behaviour. Instead of approaching the ball when ball is less than threshold value from Goalie, the Goalie now approaches a ball if it is near some distance from goal post. This helped Goalie keep highly localized and defend goal post well. Also, Goalie returns to previsous position or new best position rather than chasing the ball.
 
 \subsection{The Head Finite State Machine}
 	The Head Finite State Machine (HeadFSM) controls the robot head movements. During the game, the robot has to move its head (changes yaw and pitch) efficiently to better and faster locate objects on field. The head movements are usually independent from the body movement, and therefore a separate state machine is designed. 
